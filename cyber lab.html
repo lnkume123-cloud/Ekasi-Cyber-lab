@@ -1,0 +1,337 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ekasi Cyber Labs — Practice</title>
+    <meta name="description" content="Free browser-based cybersecurity practice labs (CMD, Linux, Task Manager, Event Viewer, Windows Defender).">
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --card: #121821;
+            --accent: #6ee7ff;
+            --text: #e5eef7
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui,Segoe UI,Roboto,Arial;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased
+        }
+
+        header {
+            padding: 12px;
+            text-align: center;
+            background: linear-gradient(180deg,rgba(255,255,255,.02),transparent)
+        }
+
+            header h1 {
+                margin: 0;
+                font-size: 20px;
+                color: var(--accent)
+            }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 10px
+        }
+
+            nav button {
+                background: none;
+                border: 1px solid rgba(255,255,255,.04);
+                color: var(--accent);
+                padding: 8px 10px;
+                border-radius: 8px
+            }
+
+        .wrap {
+            max-width: 1000px;
+            margin: 18px auto;
+            padding: 12px
+        }
+
+        section {
+            display: none
+        }
+
+            section.active {
+                display: block
+            }
+
+        .card {
+            background: var(--card);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px
+        }
+
+        .output {
+            background: #02060a;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.04);
+            background: #07101a;
+            color: var(--text)
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.04);
+            background: transparent;
+            color: var(--text);
+            margin-top: 8px
+        }
+
+        footer {
+            color: #9fb3c8;
+            text-align: center;
+            font-size: 13px;
+            margin-top: 20px;
+            padding-bottom: 24px
+        }
+
+        a.affiliate {
+            background: #6ee7ff;
+            color: #071028;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ekasi Cyber Labs</h1>
+        <nav>
+            <button onclick="show('home')">Home</button>
+            <button onclick="show('cmd')">CMD</button>
+            <button onclick="show('linux')">Linux</button>
+            <button onclick="show('task')">Task Manager</button>
+            <button onclick="show('event')">Event Viewer</button>
+            <button onclick="show('defender')">Defender</button>
+        </nav>
+    </header>
+
+    <div class="wrap">
+        <section id="home" class="active">
+            <div class="card">
+                <h2>Welcome</h2>
+                <p>Practice safe, simulated cybersecurity labs in your browser. Use the tabs above to start practicing.</p>
+                <p>Buy the full ebook: <a href="YOUR_EBOOK_LINK" target="_blank" class="affiliate">Buy ebook</a></p>
+                <p>Recommended tool: <a href="YOUR_AFFILIATE_LINK" target="_blank" class="affiliate">Get VPN (affiliate)</a></p>
+            </div>
+        </section>
+
+        <section id="cmd">
+            <div class="card">
+                <h3>Command Prompt — Type commands below</h3>
+                <div id="cmd-output" class="output">C:\> (type a command below and press Enter)</div>
+                <input id="cmd-input" type="text" placeholder="e.g. ipconfig" />
+                <div id="cmd-exercises" style="margin-top:10px"></div>
+            </div>
+        </section>
+
+        <section id="linux">
+            <div class="card">
+                <h3>Linux Terminal — Type commands below</h3>
+                <div id="linux-output" class="output">student@ekasi:~$ (type command and press Enter)</div>
+                <input id="linux-input" type="text" placeholder="e.g. ls" />
+                <div id="linux-exercises" style="margin-top:10px"></div>
+            </div>
+        </section>
+
+        <section id="task">
+            <div class="card">
+                <h3>Task Manager — Simulated controls</h3>
+                <div id="task-status" class="output">Press a button below to simulate Task Manager actions</div>
+                <div id="task-exercises" style="margin-top:10px"></div>
+            </div>
+        </section>
+
+        <section id="event">
+            <div class="card">
+                <h3>Event Viewer — Logs</h3>
+                <div id="ev-loglist" class="output"></div>
+                <div id="ev-details" class="output" style="margin-top:8px">Select a log to view details</div>
+                <div id="ev-exercises" style="margin-top:10px"></div>
+            </div>
+        </section>
+
+        <section id="defender">
+            <div class="card">
+                <h3>Windows Defender — Simulated controls</h3>
+                <div id="wd-status" class="output">Click a simulated action below</div>
+                <div id="wd-exercises" style="margin-top:10px"></div>
+            </div>
+        </section>
+
+        <footer>
+            © <span id="yr"></span> Ekasi Production — Educational use only.
+        </footer>
+    </div>
+
+    <script>
+        // UI helpers
+        document.getElementById('yr').textContent = new Date().getFullYear();
+        function show(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // sanitize
+        function sanitize(s) { return s ? String(s).replace(/[<>&"'`]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c])) : '' }
+
+        // ===== CMD =====
+        const cmdOutput = document.getElementById('cmd-output'), cmdInput = document.getElementById('cmd-input');
+        const cmdMap = {
+            "ipconfig": "Windows IP Configuration\nIPv4: 192.168.1.10",
+            "ping google.com": "Reply from google.com: bytes=32 time=15ms",
+            "dir": "file1.txt\nfile2.docx",
+            "cls": "[screen cleared]",
+            "tasklist": "chrome.exe 1234\ncmd.exe 5678",
+            "netstat": "Active Connections\nTCP 192.168.1.10:49322 172.217.11.206:80 ESTABLISHED"
+        };
+        const cmdExercises = [
+            "Display IP configuration: ipconfig",
+            "Ping google.com: ping google.com",
+            "Show active connections: netstat",
+            "List files: dir",
+            "Clear screen: cls",
+            "Show task list: tasklist",
+            "Create folder (simulated): mkdir newfolder",
+            "Delete file (simulated): del test.txt",
+            "Show date: date /t",
+            "Show time: time /t",
+            "Schedule shutdown: shutdown /s /t 60",
+            "Show network config: ipconfig /all"
+        ];
+        cmdInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                const v = sanitize(cmdInput.value.trim().toLowerCase());
+                if (!v) return;
+                if (v === 'cls') cmdOutput.textContent = '';
+                else cmdOutput.textContent += '\nC:\\> ' + v + '\n' + (cmdMap[v] || "Unknown command (try Show Memo)");
+                cmdInput.value = '';
+            }
+        });
+        document.getElementById('cmd-exercises').innerHTML = cmdExercises.map((t, i) => `<div style="margin-top:8px"><b>Ex ${i + 1}.</b> ${t} <button class="btn" onclick="alert('Memo: ${t.split(': ')[1]}')">Show Memo</button></div>`).join('');
+
+        // ===== LINUX =====
+        const linOut = document.getElementById('linux-output'), linIn = document.getElementById('linux-input');
+        const linMap = {
+            "ls": "Desktop Documents Downloads",
+            "pwd": "/home/student",
+            "whoami": "student",
+            "uname -a": "Linux ekasi 6.6.0-ekasi #1 SMP",
+            "ifconfig": "eth0: inet 192.168.1.15",
+            "ps": "PID TTY CMD\n1010 bash\n1020 python"
+        };
+        const linExercises = [
+            "List files: ls",
+            "Print working dir: pwd",
+            "Whoami: whoami",
+            "System info: uname -a",
+            "Network config: ifconfig",
+            "List processes: ps",
+            "Create file (simulated): touch notes.txt",
+            "Remove file (simulated): rm test.txt",
+            "Show file contents (sim): cat file.txt",
+            "Change dir: cd /etc",
+            "Make dir: mkdir labtest",
+            "Shutdown (simulated): shutdown -h now"
+        ];
+        linIn.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                const v = sanitize(linIn.value.trim().toLowerCase());
+                if (!v) return;
+                linOut.textContent += '\nstudent@ekasi:~$ ' + v + '\n' + (linMap[v] || "bash: command not found");
+                linIn.value = '';
+            }
+        });
+        document.getElementById('linux-exercises').innerHTML = linExercises.map((t, i) => `<div style="margin-top:8px"><b>Ex ${i + 1}.</b> ${t} <button class="btn" onclick="alert('Memo: ${t.split(': ')[1]}')">Show Memo</button></div>`).join('');
+
+        // ===== TASK MANAGER =====
+        const taskStatus = document.getElementById('task-status');
+        const taskMap = {
+            list: "Processes: chrome.exe, explorer.exe, cmd.exe",
+            cpu: "CPU Usage: 23%",
+            memory: "Memory Usage: 40%",
+            kill: "chrome.exe terminated",
+            services: "Services: DHCP Client, DNS Client"
+        };
+        document.getElementById('task-exercises').innerHTML = [
+            "List processes|list",
+            "Show CPU usage|cpu",
+            "Show Memory usage|memory",
+            "Kill chrome.exe|kill",
+            "List services|services",
+            "Show logged users|users",
+            "Show details|details",
+            "Show startup apps|startup",
+            "Show performance charts|performance",
+            "Show app history|history",
+            "End task (simulated)|end",
+            "Show resource usage|resource"
+        ].map((s, i) => { const [label, act] = s.split('|'); return `<div style="margin-top:8px"><b>Ex ${i + 1}.</b> ${label} <button class="btn" onclick="taskRun('${act}')">Run + Memo</button></div>` }).join('');
+        function taskRun(a) { taskStatus.textContent = taskMap[a] || `Simulated action: ${a}`; alert('Memo: ' + a); }
+
+        // ===== EVENT VIEWER =====
+        const logs = [
+            { cat: "System", msg: "System started", type: "Info" },
+            { cat: "Application", msg: "App warning", type: "Warning" },
+            { cat: "Security", msg: "Failed login", type: "Error" },
+            { cat: "Security", msg: "Successful login", type: "Info" },
+            { cat: "System", msg: "Low disk space", type: "Warning" },
+            { cat: "Application", msg: "App crashed", type: "Error" },
+            { cat: "Security", msg: "Privilege escalation blocked", type: "Error" },
+            { cat: "System", msg: "Driver loaded", type: "Info" },
+            { cat: "Application", msg: "Update installed", type: "Info" },
+            { cat: "Security", msg: "User locked out", type: "Error" },
+            { cat: "System", msg: "Shutdown event", type: "Info" },
+            { cat: "Application", msg: "App started successfully", type: "Info" }
+        ];
+        const evList = document.getElementById('ev-loglist'), evDetails = document.getElementById('ev-details');
+        logs.forEach((l, i) => { const div = document.createElement('div'); div.textContent = `[${l.cat}] ${l.msg}`; div.style.padding = '6px'; div.style.borderBottom = '1px solid rgba(255,255,255,.03)'; div.onclick = () => { evDetails.textContent = `ID:${i + 1}\nCategory:${l.cat}\nType:${l.type}\nMessage:${l.msg}` }; evList.appendChild(div) });
+        document.getElementById('ev-exercises').innerHTML = [
+            "Open Event Viewer|Click any log",
+            "View System logs|Select System",
+            "View Application logs|Select Application",
+            "View Security logs|Select Security",
+            "Find an error|Select Error",
+            "Show warnings|Select Warning",
+            "Show info logs|Select Info",
+            "Filter to Security|Use filter",
+            "Export logs (sim)|Export",
+            "Clear logs (sim)|Clear",
+            "Find login events|Search user",
+            "Generate reliability report|Report"
+        ].map((s, i) => { const [q, a] = s.split('|'); return `<div style="margin-top:8px"><b>Ex ${i + 1}.</b> ${q} <button class="btn" onclick="alert('Memo: ${a}')">Show Memo</button></div>` }).join('');
+
+        // ===== DEFENDER =====
+        const wdStatus = document.getElementById('wd-status');
+        const wdMap = { scan: "Quick scan complete. No threats.", fullscan: "Full scan complete. 0 threats.", update: "Security intelligence updated.", realtime: "Real-time protection enabled.", disable: "Real-time protection disabled ⚠", firewall: "Firewall enabled.", checkfirewall: "Firewall status: ON", history: "No recent threats", remove: "Threat removed", schedule: "Scan scheduled 2 AM daily", settings: "Opened settings", report: "Security report generated" };
+        document.getElementById('wd-exercises').innerHTML = [
+            "Run quick scan|scan", "Run full scan|fullscan", "Check updates|update", "Enable realtime|realtime", "Disable realtime|disable", "Enable firewall|firewall", "Check firewall|checkfirewall", "View history|history", "Remove threat|remove", "Schedule scan|schedule", "Open settings|settings", "Generate report|report"
+        ].map((s, i) => { const [q, a] = s.split('|'); return `<div style="margin-top:8px"><b>Ex ${i + 1}.</b> ${q} <button class="btn" onclick="wdRun('${a}')">Run + Memo</button></div>` }).join('');
+        function wdRun(a) { wdStatus.textContent = wdMap[a] || `Simulated: ${a}`; alert('Memo: ' + a) }
+
+    </script>
+</body>
+</html>
