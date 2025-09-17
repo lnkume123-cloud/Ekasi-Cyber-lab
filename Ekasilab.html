@@ -6,7 +6,10 @@
   <title>Ekasi Cyber Labs — Gamified (Profiles + Scoreboard)</title>
   <meta name="description" content="Gamified browser labs: CMD, Linux, Task Manager, Event Viewer, Windows Defender. Profiles, multi-answer support, memos, timer, scoring, and local progress."/>
   <style>
-    :root{--bg:#0b0f14;--card:#121821;--accent:#6ee7ff;--text:#e5eef7;--muted:#9fb3c8;--success:#7ef3b3;--danger:#ff6b6b}
+    :root{
+      --bg:#0b0f14;--card:#121821;--accent:#6ee7ff;--text:#e5eef7;--muted:#9fb3c8;
+      --success:#7ef3b3;--danger:#ff6b6b
+    }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
     header{padding:12px 10px;text-align:center;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
@@ -19,7 +22,7 @@
     .lab-card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:12px}
     .exercise{border-radius:8px;background:#071013;padding:10px;margin:10px 0;border:1px solid rgba(255,255,255,.03)}
     .output{background:#02060a;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;color:var(--accent);min-height:44px}
-    input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:#07101a;color:var(--text);margin-top:8px}
+    input[type="text"], input[type="search"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:#07101a;color:var(--text);margin-top:8px}
     .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);margin-top:8px;cursor:pointer}
     .small{padding:6px 10px;font-size:13px}
     footer{color:#9fb3c8;text-align:center;font-size:13px;margin-top:20px;padding-bottom:24px}
@@ -27,12 +30,15 @@
     .score-badge{display:inline-block;padding:6px 10px;border-radius:8px;background:linear-gradient(90deg,var(--accent),#9b83ff);color:#071028;font-weight:700}
     .profile-box{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:8px}
     .profile-box input{max-width:260px}
+    /* Banner */
     .banner{background:linear-gradient(90deg,#0f1720,#07101a);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:12px}
     .banner .left{flex:1}
     .banner img{max-height:72px;border-radius:8px}
+    /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(3,6,10,0.7);display:flex;align-items:center;justify-content:center;z-index:9999}
     .modal{background:#071219;padding:18px;border-radius:12px;max-width:520px;width:94%;border:1px solid rgba(255,255,255,.04)}
     .modal h3{margin:0 0 8px}
+    /* scoreboard table */
     table{width:100%;border-collapse:collapse;margin-top:8px}
     th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.03);text-align:left}
     @media (max-width:640px){header h1{font-size:18px}; .banner{flex-direction:column;align-items:flex-start}}
@@ -69,7 +75,7 @@
             <h3 style="margin:0 0 6px;color:var(--accent)">Get the Ekasi Cybersecurity Ebook</h3>
             <p style="margin:0;color:var(--muted)">Deep-dive labs, memos, and extended solutions — download the full guide and support the project.</p>
             <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-              <a href="https://www.canva.com/design/DAGxSOP49nM/z9ZMztyNt-AfQIl1XqYq3Q/edit?utm_content=DAGxSOP49nM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" target="_blank" rel="noopener noreferrer" class="btn small">Buy Ebook</a>
+              <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" rel="noopener noreferrer" class="btn small">Buy Ebook</a>
               <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" rel="noopener noreferrer" class="btn small">Special Tools (ClickBank)</a>
             </div>
           </div>
@@ -83,96 +89,98 @@
       </div>
     </section>
 
-    <!-- CMD -->
+    <!-- CMD LAB -->
     <section id="cmd">
       <div class="lab-card">
         <h2>CMD Lab — Scenarios</h2>
         <div class="meta">Type the correct command & Submit or press Enter. Multiple accepted answers supported (aliases).</div>
         <div id="cmd-exercises-area"></div>
-        <div id="cmd-status" class="meta"></div>
+        <div class="meta" id="cmd-status"></div>
         <div style="margin-top:8px"><button class="btn small" onclick="resetLab('cmd')">Reset CMD Lab</button></div>
       </div>
       <div class="banner">
         <div class="left">
           <h3>📘 Level Up Your Skills</h3>
-          <p>Get the full Ekasi ebook and premium tools for deeper practice.</p>
-          <a href="https://www.canva.com/design/DAGxSOP49nM/z9ZMztyNt-AfQIl1XqYq3Q/edit?utm_content=DAGxSOP49nM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" target="_blank" class="btn small">Buy Ebook</a>
-          <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
+          <p>Get the full Ekasi Cybersecurity Ebook and premium tools for deeper practice.</p>
+          <div style="margin-top:8px">
+            <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
+            <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Linux -->
+    <!-- LINUX LAB -->
     <section id="linux">
       <div class="lab-card">
         <h2>Linux Lab — Scenarios</h2>
         <div class="meta">Type the exact Linux command required by each scenario.</div>
         <div id="linux-exercises-area"></div>
-        <div id="linux-status" class="meta"></div>
+        <div class="meta" id="linux-status"></div>
         <div style="margin-top:8px"><button class="btn small" onclick="resetLab('linux')">Reset Linux Lab</button></div>
       </div>
       <div class="banner">
         <div class="left">
           <h3>📘 Level Up Your Skills</h3>
-          <p>Get the full Ekasi ebook and premium tools for deeper practice.</p>
-          <a href="https://www.canva.com/design/DAGxSOP49nM/z9ZMztyNt-AfQIl1XqYq3Q/edit?utm_content=DAGxSOP49nM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" target="_blank" class="btn small">Buy Ebook</a>
+          <p>Buy the ebook and pro tools for deeper labs.</p>
+          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
           <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
         </div>
       </div>
     </section>
 
-    <!-- Task Manager -->
+    <!-- TASK MANAGER LAB -->
     <section id="task">
       <div class="lab-card">
         <h2>Task Manager Lab — Scenarios</h2>
         <div class="meta">Simulated Task Manager actions — type the action keyword then Submit.</div>
         <div id="task-exercises-area"></div>
-        <div id="task-status" class="meta"></div>
+        <div class="meta" id="task-status"></div>
         <div style="margin-top:8px"><button class="btn small" onclick="resetLab('task')">Reset Task Manager Lab</button></div>
       </div>
       <div class="banner">
         <div class="left">
           <h3>📘 Level Up Your Skills</h3>
-          <p>Get the full Ekasi ebook and premium tools for deeper practice.</p>
-          <a href="https://www.canva.com/design/DAGxSOP49nM/z9ZMztyNt-AfQIl1XqYq3Q/edit?utm_content=DAGxSOP49nM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" target="_blank" class="btn small">Buy Ebook</a>
+          <p>Buy the full guide for more practice.</p>
+          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
           <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
         </div>
       </div>
     </section>
 
-    <!-- Event Viewer -->
+    <!-- EVENT VIEWER LAB -->
     <section id="event">
       <div class="lab-card">
         <h2>Event Viewer Lab — Scenarios</h2>
         <div class="meta">Type the correct action/command to inspect or filter logs.</div>
         <div id="event-exercises-area"></div>
-        <div id="event-status" class="meta"></div>
+        <div class="meta" id="event-status"></div>
         <div style="margin-top:8px"><button class="btn small" onclick="resetLab('event')">Reset Event Viewer Lab</button></div>
       </div>
       <div class="banner">
         <div class="left">
           <h3>📘 Level Up Your Skills</h3>
-          <p>Get the full Ekasi ebook and premium tools for deeper practice.</p>
-          <a href="https://www.canva.com/design/DAGxSOP49nM/z9ZMztyNt-AfQIl1XqYq3Q/edit?utm_content=DAGxSOP49nM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" target="_blank" class="btn small">Buy Ebook</a>
+          <p>Full ebook + premium tools for serious learners.</p>
+          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
           <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
         </div>
       </div>
     </section>
 
-    <!-- Defender -->
+    <!-- DEFENDER LAB -->
     <section id="defender">
       <div class="lab-card">
         <h2>Windows Defender Lab — Scenarios</h2>
         <div class="meta">Simulated Defender actions — type commands like <code>scan</code>, <code>update</code>, <code>firewall</code>.</div>
         <div id="defender-exercises-area"></div>
-        <div id="defender-status" class="meta"></div>
+        <div class="meta" id="defender-status"></div>
         <div style="margin-top:8px"><button class="btn small" onclick="resetLab('defender')">Reset Defender Lab</button></div>
       </div>
       <div class="banner">
         <div class="left">
           <h3>📘 Level Up Your Skills</h3>
-          <p>Get the full Ekasi ebook and premium tools for deeper practice.</p>
-          <a href="https://www.canva.com/design/DAGxSOP49nM/z9ZMztyNt-AfQIl1XqYq3Q/edit?utm_content=DAGxSOP49nM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton" target="_blank" class="btn small">Buy Ebook</a>
+          <p>Buy the ebook for full memos and solutions.</p>
+          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
           <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
         </div>
       </div>
@@ -213,6 +221,7 @@ function setProfile(){
   if(!name){ alert('Type a name for the profile'); return; }
   currentProfile = name.replace(/\s+/g,'_').toLowerCase();
   document.getElementById('profile-show').textContent = `Profile: ${name}`;
+  // initialize labs if not present
   ['cmd','linux','task','event','defender'].forEach(initLab);
   renderScoreboard();
 }
@@ -249,7 +258,7 @@ function resetLab(labId){
   renderScoreboard();
 }
 
-/* ---------- scoring engine ---------- */
+/* ---------- scoring same engine as before, now profile-aware ---------- */
 function computeScore(state){
   if(!state) return {score:0,totalSeconds:0,completed:0,total:0,memoBefore:false,anyMemoUsed:false};
   const exercises = state.exercises || [];
@@ -304,9 +313,10 @@ function downloadReport(labId){
   a.href = url; a.download = `ekasi_${currentProfile}_${labId}_report.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
-/* ---------- Answer matching ---------- */
+/* ---------- Accept multiple answers helper ---------- */
 function normalizeAnswer(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
 function isAnswerMatch(user, answer){
+  // answer may be string or array
   const u = normalizeAnswer(user);
   if(!u) return false;
   if(Array.isArray(answer)){
@@ -316,7 +326,9 @@ function isAnswerMatch(user, answer){
   }
 }
 
-/* ========== LAB Data (12 each) ========== */
+/* ========== LAB Data (with multi-answer support where useful) ========== */
+/* Each answer may be a string or an array of strings (aliases) */
+
 /* CMD */
 const cmdExercises = [
   {scenario:"1) The helpdesk reports no internet access on one PC. Test basic connectivity to Google.", answer:["ping google.com","ping www.google.com"], memo:"Use ping to check network reachability: ping google.com"},
@@ -378,7 +390,8 @@ const eventExercisesData = [
   {scenario:"9) Clear logs (simulated).", answer:["clear logs","clear"], memo:"Use 'clear logs' to clear viewer (simulated)"},
   {scenario:"10) Search logs for a username.", answer:["find user","search user"], memo:"Use 'find user' to search logs for events by user"},
   {scenario:"11) Generate reliability report.", answer:["reliability report","generate reliability report"], memo:"Use 'reliability report' to create report"},
-  {scenario:"12) Filter critical events only.", answer:["filter critical"], memo:"Use 'filter critical' to show only critical events"}
+  {scenario:"12) Filter critical events only.", answer:["filter critical"], memo:"Use 'filter critical' to show only critical events"
+  }
 ];
 
 /* DEFENDER */
@@ -416,7 +429,11 @@ function initLab(labId){
   }
   let state = loadState(labId);
   if(!state){
-    state = { startTime: null, endTime: null, exercises: entry.data.map(()=>({attempts:0,memoClicked:false,memoClickedBeforeAttempt:false,completedAt:null})) };
+    state = {
+      startTime: null,
+      endTime: null,
+      exercises: entry.data.map(()=>({attempts:0,memoClicked:false,memoClickedBeforeAttempt:false,completedAt:null}))
+    };
     saveState(labId, state);
   }
   entry.data.forEach((ex, idx)=>{
@@ -443,6 +460,7 @@ function initLab(labId){
     `;
     area.appendChild(exDiv);
 
+    // wires
     const inputEl = document.getElementById(`${labId}-in-${idx}`);
     const submitBtn = document.getElementById(`${labId}-submit-${idx}`);
     const memoBtn = document.getElementById(`${labId}-memo-${idx}`);
@@ -495,7 +513,7 @@ function initLab(labId){
 
     submitBtn.addEventListener('click', submitHandler);
     inputEl.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') submitHandler(); });
-  });
+  }); // end each
 
   updateStatus(labId, state);
 }
@@ -511,7 +529,7 @@ function updateStatus(labId, state){
   const anyMemoBefore = st.exercises.some(e=>e.memoClickedBeforeAttempt);
   const anyMemo = st.exercises.some(e=>e.memoClicked);
   const started = !!st.startTime;
-  const elapsed = started ? Math.round(((st.endTime||Date.now()) - st.startTime)/1000) : 0;
+  const elapsed = started ? Math.round(( (st.endTime||Date.now()) - st.startTime)/1000) : 0;
   statusEl.innerHTML = `Profile: ${currentProfile} &nbsp;|&nbsp; Progress: ${completed}/${st.exercises.length} &nbsp;|&nbsp; Time: ${elapsed}s &nbsp;|&nbsp; Memos used: ${anyMemo? 'Yes':'No'} ${anyMemoBefore? '(some before attempt)':''}`;
 }
 
@@ -578,17 +596,30 @@ function showLabReport(labId){
   showModal(html);
 }
 
-/* Expose small helpers globally */
+/* initialize all labs when profile is set or page loads */
+['cmd','linux','task','event','defender'].forEach(id=>{
+  document.addEventListener('DOMContentLoaded', ()=>{ /* placeholder */ });
+});
+
+/* expose functions globally */
 window.resetLab = function(l){ if(!currentProfile){ alert('Set profile first'); return; } resetLab(l); }
 window.downloadReport = function(l){ if(!currentProfile){ alert('Set profile first'); return; } downloadReport(l); }
 
-/* watch profile input for Enter */
+/* small helper: ensure profile set when page interaction */
+function profileChecked(){
+  if(!currentProfile){
+    alert('Please set a profile on the Home tab and click "Use Profile" first.');
+    throw new Error('No profile set');
+  }
+}
+
+/* When profile is set, initialize labs */
 (function watchProfileInput(){
   const input = document.getElementById('profile-name');
   input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ setProfile(); }});
 })();
 
-/* override setProfile to init labs */
+/* After profile set we must init labs & render scoreboard */
 const _oldSetProfile = setProfile;
 setProfile = function(){
   const name = (document.getElementById('profile-name').value || '').trim();
@@ -599,9 +630,9 @@ setProfile = function(){
   renderScoreboard();
 };
 
-/* On load placeholder */
+/* On first load, show placeholder profile message */
 document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('profile-show').textContent = ''; });
 
 </script>
 </body>
-            </html>
+  </html>
