@@ -204,7 +204,19 @@
   <div id="modal-root" style="display:none"></div>
 
 <script>
-/* ---------------- Helpers ---------------- */
+// ---- auth check ----
+const LOGGED_IN_KEY = 'ekasi_logged_in_user_v1';
+const user = localStorage.getItem(LOGGED_IN_KEY);
+if(!user){
+  window.location.href = "auth.html";
+}
+// optional logout button anywhere:
+function logout(){
+  localStorage.removeItem(LOGGED_IN_KEY);
+  localStorage.removeItem(LOGGED_IN_KEY+"_auto");
+  window.location.href="auth.html";
+  }
+  /* ---------------- Helpers ---------------- */
 document.getElementById('yr').textContent = new Date().getFullYear();
 function show(id){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
@@ -251,9 +263,30 @@ function saveState(labId, state){
   try{ profileChecked(); localStorage.setItem(makeLabKey(labId), JSON.stringify(state)); }catch(e){}
 }
 function resetLab(labId){
+  // This wrapper ensures profile is present and will reinitialize UI after clearing storage
   profileChecked();
   if(!confirm('Reset all progress for this lab?')) return;
   localStorage.removeItem(makeLabKey(labId));
+  // re-create a fresh state and re-render the lab
+  const areaMap = {
+    cmd:{data:cmdExercises},
+    linux:{data:linuxExercises},
+    task:{data:taskExercisesData},
+    event:{data:eventExercisesData},
+    defender:{data:defenderExercisesData}
+  };
+  const template = areaMap[labId];
+  if(template){
+    const fresh = {
+      startTime: null,
+      endTime: null,
+      exercises: template.data.map(()=>({attempts:0,memoClicked:false,memoClickedBeforeAttempt:false,completedAt:null}))
+    };
+    // save a fresh state (so UI sees it)
+    try{ localStorage.setItem(makeLabKey(labId), JSON.stringify(fresh)); }catch(e){}
+  } else {
+    localStorage.removeItem(makeLabKey(labId));
+  }
   initLab(labId);
   renderScoreboard();
 }
@@ -390,8 +423,7 @@ const eventExercisesData = [
   {scenario:"9) Clear logs (simulated).", answer:["clear logs","clear"], memo:"Use 'clear logs' to clear viewer (simulated)"},
   {scenario:"10) Search logs for a username.", answer:["find user","search user"], memo:"Use 'find user' to search logs for events by user"},
   {scenario:"11) Generate reliability report.", answer:["reliability report","generate reliability report"], memo:"Use 'reliability report' to create report"},
-  {scenario:"12) Filter critical events only.", answer:["filter critical"], memo:"Use 'filter critical' to show only critical events"
-  }
+  {scenario:"12) Filter critical events only.", answer:["filter critical"], memo:"Use 'filter critical' to show only critical events"}
 ];
 
 /* DEFENDER */
@@ -422,11 +454,14 @@ function initLab(labId){
   const entry = areaMap[labId];
   const area = document.getElementById(entry.areaId);
   area.innerHTML = '';
+
   if(!currentProfile){
     area.innerHTML = `<div class="meta">Please enter a profile name on Home and click "Use Profile" to start this lab.</div>`;
     document.getElementById(entry.statusId).textContent = 'No profile selected';
     return;
   }
+
+  // load or create state
   let state = loadState(labId);
   if(!state){
     state = {
@@ -436,6 +471,8 @@ function initLab(labId){
     };
     saveState(labId, state);
   }
+
+  // render each exercise
   entry.data.forEach((ex, idx)=>{
     const exState = state.exercises[idx];
     const exDiv = document.createElement('div');
@@ -635,4 +672,4 @@ document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('pro
 
 </script>
 </body>
-  </html>
+            </html>
