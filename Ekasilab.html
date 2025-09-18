@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ekasi Cyber Labs — Gamified (Profiles + Scoreboard)</title>
-  <meta name="description" content="Gamified browser labs: CMD, Linux, Task Manager, Event Viewer, Windows Defender. Profiles, multi-answer support, memos, timer, scoring, and local progress."/>
+  <title>Ekasi Cyber Labs — Gamified (Auth + Labs)</title>
+  <meta name="description" content="Gamified browser labs with auth: CMD, Linux, Task Manager, Event Viewer, Defender. Profiles, memos, scoring, and local progress."/>
   <style>
     :root{
       --bg:#0b0f14;--card:#121821;--accent:#6ee7ff;--text:#e5eef7;--muted:#9fb3c8;
@@ -22,7 +22,7 @@
     .lab-card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:12px}
     .exercise{border-radius:8px;background:#071013;padding:10px;margin:10px 0;border:1px solid rgba(255,255,255,.03)}
     .output{background:#02060a;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;color:var(--accent);min-height:44px}
-    input[type="text"], input[type="search"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:#07101a;color:var(--text);margin-top:8px}
+    input[type="text"], input[type="password"], input[type="search"], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:#07101a;color:var(--text);margin-top:8px}
     .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);margin-top:8px;cursor:pointer}
     .small{padding:6px 10px;font-size:13px}
     footer{color:#9fb3c8;text-align:center;font-size:13px;margin-top:20px;padding-bottom:24px}
@@ -30,24 +30,24 @@
     .score-badge{display:inline-block;padding:6px 10px;border-radius:8px;background:linear-gradient(90deg,var(--accent),#9b83ff);color:#071028;font-weight:700}
     .profile-box{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:8px}
     .profile-box input{max-width:260px}
-    /* Banner */
     .banner{background:linear-gradient(90deg,#0f1720,#07101a);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:12px}
     .banner .left{flex:1}
     .banner img{max-height:72px;border-radius:8px}
-    /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(3,6,10,0.7);display:flex;align-items:center;justify-content:center;z-index:9999}
-    .modal{background:#071219;padding:18px;border-radius:12px;max-width:520px;width:94%;border:1px solid rgba(255,255,255,.04)}
+    .modal{background:#071219;padding:18px;border-radius:12px;max-width:720px;width:94%;border:1px solid rgba(255,255,255,.04);color:var(--text)}
     .modal h3{margin:0 0 8px}
-    /* scoreboard table */
     table{width:100%;border-collapse:collapse;margin-top:8px}
     th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.03);text-align:left}
+    .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .muted{color:var(--muted);font-size:13px}
+    @media (max-width:800px){.auth-grid{grid-template-columns:1fr}}
     @media (max-width:640px){header h1{font-size:18px}; .banner{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
   <header>
     <h1>Ekasi Cyber Labs — Gamified</h1>
-    <nav>
+    <nav id="top-nav" style="display:none">
       <button onclick="show('home')">Home</button>
       <button onclick="show('cmd')">CMD</button>
       <button onclick="show('linux')">Linux</button>
@@ -55,18 +55,108 @@
       <button onclick="show('event')">Event Viewer</button>
       <button onclick="show('defender')">Defender</button>
       <button onclick="show('scoreboard')">Scoreboard</button>
+      <button onclick="logout()" style="margin-left:8px">Logout</button>
     </nav>
   </header>
 
   <div class="wrap">
-    <!-- HOME -->
-    <section id="home" class="active">
+    <!-- AUTH PAGE (separate screen) -->
+    <section id="auth" class="active">
+      <div class="lab-card">
+        <h2>Welcome — Login or Register</h2>
+        <div class="auth-grid">
+          <div>
+            <h3>Login</h3>
+            <div class="meta">Existing users: login to continue</div>
+            <div style="margin-top:8px">
+              <label class="muted">Username</label>
+              <input id="login-username" type="text" placeholder="username">
+              <label class="muted">Password</label>
+              <div style="display:flex;gap:8px">
+                <input id="login-password" type="password" placeholder="password">
+                <label style="display:flex;align-items:center;gap:6px;">
+                  <input id="login-showpw" type="checkbox" onchange="document.getElementById('login-password').type = this.checked ? 'text' : 'password'"> Show
+                </label>
+              </div>
+              <div style="margin-top:8px">
+                <label style="display:flex;align-items:center;gap:8px"><input id="auto-login" type="checkbox"> Auto-login on this device</label>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <button class="btn small" onclick="handleLogin()">Login</button>
+                <button class="btn small" onclick="showForgot()">Forgot Password</button>
+              </div>
+              <div id="login-msg" class="meta"></div>
+            </div>
+          </div>
+
+          <div>
+            <h3>Register</h3>
+            <div class="meta">Create an account before playing</div>
+            <div style="margin-top:8px">
+              <label class="muted">Username (min 8 chars, 1 uppercase, 1 digit, 1 special)</label>
+              <input id="reg-username" type="text" placeholder="Choose username">
+              <label class="muted">Password (min 10 chars, upper, lower, digit, special)</label>
+              <input id="reg-password" type="password" placeholder="Choose strong password">
+              <label class="muted">Show password</label>
+              <label style="display:flex;align-items:center;gap:8px"><input id="reg-showpw" type="checkbox" onchange="document.getElementById('reg-password').type = this.checked ? 'text' : 'password'"> Show</label>
+
+              <div style="margin-top:8px">
+                <div class="muted">Security questions (answers kept private on your device). Provide honest answers — you'll need at least 2 correct to reset password.</div>
+                <div style="margin-top:8px">
+                  <label class="muted">1) What do you want to achieve with this learning app?</label>
+                  <input id="q1" type="text">
+                  <label class="muted">2) What are your hobbies?</label>
+                  <input id="q2" type="text">
+                  <label class="muted">3) Will you check out my cybersecurity ebook?</label>
+                  <input id="q3" type="text">
+                  <label class="muted">4) How old are you?</label>
+                  <input id="q4" type="text">
+                  <label class="muted">5) What hidden talent do you want to unlock in the future?</label>
+                  <input id="q5" type="text">
+                </div>
+              </div>
+
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <button class="btn small" onclick="handleRegister()">Register</button>
+                <button class="btn small" onclick="clearRegisterForm()">Clear</button>
+              </div>
+              <div id="reg-msg" class="meta"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="muted">You can register and test everything locally — credentials are stored in your browser's localStorage.</div>
+      </div>
+    </section>
+
+    <!-- FORGOT PASSWORD SCREEN (modal-like area) -->
+    <section id="forgot" style="display:none">
+      <div class="lab-card">
+        <h2>Forgot Password — Recover</h2>
+        <div class="meta">Enter username and answer at least 2 of the security questions to reset your password.</div>
+        <div style="margin-top:8px">
+          <label class="muted">Username</label>
+          <input id="fp-username" type="text" placeholder="username">
+          <div id="fp-questions" style="margin-top:12px"></div>
+          <div style="margin-top:8px">
+            <label class="muted">New password</label>
+            <input id="fp-newpw" type="password" placeholder="new password">
+            <label style="display:flex;align-items:center;gap:8px"><input id="fp-showpw" type="checkbox" onchange="document.getElementById('fp-newpw').type=this.checked?'text':'password'"> Show</label>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn small" onclick="startForgot()">Load Questions</button>
+            <button class="btn small" onclick="submitForgot()">Submit & Reset Password</button>
+            <button class="btn small" onclick="showAuth()">Back</button>
+          </div>
+          <div id="fp-msg" class="meta"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOME (labs index) -->
+    <section id="home" style="display:none">
       <div class="lab-card">
         <div class="profile-box">
-          <input id="profile-name" type="text" placeholder="Enter your name (profile)" />
-          <button class="btn small" onclick="setProfile()">Use Profile</button>
-          <button class="btn small" onclick="clearProfile()">Clear Profile</button>
-          <div style="min-width:12px"></div>
           <div id="profile-show" style="color:var(--muted)"></div>
         </div>
 
@@ -90,7 +180,7 @@
     </section>
 
     <!-- CMD LAB -->
-    <section id="cmd">
+    <section id="cmd" style="display:none">
       <div class="lab-card">
         <h2>CMD Lab — Scenarios</h2>
         <div class="meta">Type the correct command & Submit or press Enter. Multiple accepted answers supported (aliases).</div>
@@ -111,7 +201,7 @@
     </section>
 
     <!-- LINUX LAB -->
-    <section id="linux">
+    <section id="linux" style="display:none">
       <div class="lab-card">
         <h2>Linux Lab — Scenarios</h2>
         <div class="meta">Type the exact Linux command required by each scenario.</div>
@@ -129,8 +219,8 @@
       </div>
     </section>
 
-    <!-- TASK MANAGER LAB -->
-    <section id="task">
+    <!-- TASK MANAGER -->
+    <section id="task" style="display:none">
       <div class="lab-card">
         <h2>Task Manager Lab — Scenarios</h2>
         <div class="meta">Simulated Task Manager actions — type the action keyword then Submit.</div>
@@ -148,8 +238,8 @@
       </div>
     </section>
 
-    <!-- EVENT VIEWER LAB -->
-    <section id="event">
+    <!-- EVENT VIEWER -->
+    <section id="event" style="display:none">
       <div class="lab-card">
         <h2>Event Viewer Lab — Scenarios</h2>
         <div class="meta">Type the correct action/command to inspect or filter logs.</div>
@@ -167,8 +257,8 @@
       </div>
     </section>
 
-    <!-- DEFENDER LAB -->
-    <section id="defender">
+    <!-- DEFENDER -->
+    <section id="defender" style="display:none">
       <div class="lab-card">
         <h2>Windows Defender Lab — Scenarios</h2>
         <div class="meta">Simulated Defender actions — type commands like <code>scan</code>, <code>update</code>, <code>firewall</code>.</div>
@@ -187,7 +277,7 @@
     </section>
 
     <!-- SCOREBOARD -->
-    <section id="scoreboard">
+    <section id="scoreboard" style="display:none">
       <div class="lab-card">
         <h2>Scoreboard — Profile Progress</h2>
         <div class="meta">Shows per-lab completion and latest score for the active profile.</div>
@@ -200,98 +290,220 @@
     </footer>
   </div>
 
-  <!-- Modal root -->
   <div id="modal-root" style="display:none"></div>
 
 <script>
-// ---- auth check ----
-const LOGGED_IN_KEY = 'ekasi_logged_in_user_v1';
-const user = localStorage.getItem(LOGGED_IN_KEY);
-if(!user){
-  window.location.href = "auth.html";
-}
-// optional logout button anywhere:
-function logout(){
-  localStorage.removeItem(LOGGED_IN_KEY);
-  localStorage.removeItem(LOGGED_IN_KEY+"_auto");
-  window.location.href="auth.html";
-  }
-  /* ---------------- Helpers ---------------- */
+/* ---------------- Helpers ---------------- */
 document.getElementById('yr').textContent = new Date().getFullYear();
 function show(id){
-  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  // hide/ show nav for auth vs app
+  if(id === 'auth' || id === 'forgot'){
+    document.getElementById('top-nav').style.display = 'none';
+  } else {
+    document.getElementById('top-nav').style.display = 'flex';
+  }
+  document.querySelectorAll('section').forEach(s=>s.style.display='none');
+  const el = document.getElementById(id);
+  if(el) el.style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='scoreboard') renderScoreboard();
 }
 function sanitize(s){ return s?String(s).replace(/[<>&"'`]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c])):'' }
 
-/* ------------- Profile handling ------------- */
+/* ---------------- Auth / User storage ---------------- */
+/*
+  Users stored in localStorage under key "ekasi_user_{username}"
+  Format:
+   {
+     username: "User",
+     password: "..." (stored plaintext — local only; replace with hash if you want),
+     questions: {q1:..., q2:..., q3:..., q4:..., q5:...},
+     autoLogin: true/false
+   }
+*/
+function userKey(username){ return `ekasi_user_${username.toLowerCase()}`; }
+function saveUser(obj){ try { localStorage.setItem(userKey(obj.username), JSON.stringify(obj)); return true; } catch(e){ return false; } }
+function loadUser(username){ try{ const raw=localStorage.getItem(userKey(username)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+function deleteUser(username){ try{ localStorage.removeItem(userKey(username)); }catch(e){} }
+
+/* ---------------- Validation rules ---------------- */
+function validUsername(u){
+  if(!u || u.length < 8) return false;
+  if(!/[A-Z]/.test(u)) return false;
+  if(!/\d/.test(u)) return false;
+  if(!/[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};:'",.<>\/?\\|`~]/.test(u)) return false;
+  return true;
+}
+function validPassword(p){
+  if(!p || p.length < 10) return false;
+  if(!/[A-Z]/.test(p)) return false;
+  if(!/[a-z]/.test(p)) return false;
+  if(!/\d/.test(p)) return false;
+  if(!/[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};:'",.<>\/?\\|`~]/.test(p)) return false;
+  return true;
+}
+
+/* ---------------- Auth UI helpers ---------------- */
+function showAuth(){ show('auth'); }
+function showForgot(){ show('forgot'); document.getElementById('fp-msg').textContent=''; document.getElementById('fp-questions').innerHTML=''; document.getElementById('fp-newpw').value=''; document.getElementById('fp-username').value=''; }
+
+/* Register */
+function clearRegisterForm(){
+  ['reg-username','reg-password','q1','q2','q3','q4','q5','reg-msg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('reg-msg').textContent = '';
+}
+function handleRegister(){
+  const u = (document.getElementById('reg-username').value || '').trim();
+  const p = (document.getElementById('reg-password').value || '').trim();
+  const q1 = (document.getElementById('q1').value || '').trim();
+  const q2 = (document.getElementById('q2').value || '').trim();
+  const q3 = (document.getElementById('q3').value || '').trim();
+  const q4 = (document.getElementById('q4').value || '').trim();
+  const q5 = (document.getElementById('q5').value || '').trim();
+  const msgEl = document.getElementById('reg-msg');
+  msgEl.textContent = '';
+  if(!validUsername(u)){ msgEl.textContent = 'Username invalid — min 8 chars, include uppercase, a digit and a special character.'; return; }
+  if(!validPassword(p)){ msgEl.textContent = 'Password invalid — min 10 chars, uppercase, lowercase, digit, special char required.'; return; }
+  if(!q1 || !q2 || !q3 || !q4 || !q5){ msgEl.textContent = 'Please answer all 5 questions.'; return; }
+  if(loadUser(u)){ msgEl.textContent = 'Username already exists — choose another.'; return; }
+  const userObj = { username:u, password:p, questions:{q1,q2,q3,q4,q5}, autoLogin:false };
+  if(saveUser(userObj)){
+    msgEl.textContent = 'Registered successfully. You can now login.';
+    // pre-fill login
+    document.getElementById('login-username').value = u;
+  } else {
+    msgEl.textContent = 'Failed to save user (localStorage issue).';
+  }
+}
+
+/* Login */
+function handleLogin(){
+  const u = (document.getElementById('login-username').value || '').trim();
+  const p = (document.getElementById('login-password').value || '').trim();
+  const auto = document.getElementById('auto-login').checked;
+  const msg = document.getElementById('login-msg');
+  msg.textContent = '';
+  const userObj = loadUser(u);
+  if(!userObj){ msg.textContent = 'No such user.'; return; }
+  if(userObj.password !== p){ msg.textContent = 'Wrong password.'; return; }
+  // set auto login flag
+  userObj.autoLogin = !!auto;
+  saveUser(userObj);
+  loginSuccess(u);
+}
+
+/* Auto-login on load, if present */
+(function attemptAutoLogin(){
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const key = localStorage.key(i);
+      if(!key) continue;
+      if(key.startsWith('ekasi_user_')){
+        const obj = JSON.parse(localStorage.getItem(key));
+        if(obj && obj.autoLogin){
+          // auto login this user
+          loginSuccess(obj.username);
+          return;
+        }
+      }
+    }
+  }catch(e){}
+})();
+
+/* Login success handler: set currentProfile & show labs */
 let currentProfile = null;
-function setProfile(){
-  const name = (document.getElementById('profile-name').value || '').trim();
-  if(!name){ alert('Type a name for the profile'); return; }
-  currentProfile = name.replace(/\s+/g,'_').toLowerCase();
-  document.getElementById('profile-show').textContent = `Profile: ${name}`;
-  // initialize labs if not present
+function loginSuccess(username){
+  currentProfile = username.replace(/\s+/g,'_').toLowerCase();
+  document.getElementById('profile-show').textContent = `Profile: ${username}`;
+  // show top nav and home
+  show('home');
+  // initialize all labs
   ['cmd','linux','task','event','defender'].forEach(initLab);
   renderScoreboard();
+  // show nav
+  document.getElementById('top-nav').style.display = 'flex';
 }
-function clearProfile(){
-  if(confirm('Clear active profile selection?')) {
+
+/* Logout */
+function logout(){
+  if(confirm('Log out?')) {
     currentProfile = null;
-    document.getElementById('profile-show').textContent = '';
-    document.getElementById('profile-name').value = '';
+    // hide nav, go to auth
+    document.getElementById('top-nav').style.display = 'none';
+    // clear login fields
+    ['login-username','login-password','login-msg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    show('auth');
   }
 }
-function profileChecked(){
-  if(!currentProfile){
-    alert('Please set a profile name first (top of Home).');
-    throw new Error('No profile set');
-  }
+
+/* Forgot password flow */
+function startForgot(){
+  const u = (document.getElementById('fp-username').value || '').trim();
+  const msg = document.getElementById('fp-msg'); msg.textContent = '';
+  if(!u){ msg.textContent = 'Type a username first.'; return; }
+  const userObj = loadUser(u);
+  if(!userObj){ msg.textContent = 'No such user.'; return; }
+  // render questions with inputs
+  const container = document.getElementById('fp-questions'); container.innerHTML = '';
+  ['q1','q2','q3','q4','q5'].forEach(k=>{
+    const label = document.createElement('label'); label.className='muted';
+    label.textContent = userObj.questions[k] ? (k + ':') : (k + ':');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = `fp-${k}`;
+    input.placeholder = 'Answer';
+    container.appendChild(label);
+    container.appendChild(input);
+  });
+  msg.textContent = 'Answer at least 2 correctly, then provide new password and click Submit & Reset Password.';
 }
+
+function submitForgot(){
+  const u = (document.getElementById('fp-username').value || '').trim();
+  const newpw = (document.getElementById('fp-newpw').value || '').trim();
+  const msg = document.getElementById('fp-msg'); msg.textContent='';
+  if(!u){ msg.textContent='Username required'; return; }
+  const userObj = loadUser(u);
+  if(!userObj){ msg.textContent='No such user'; return; }
+  // count correct answers
+  let correct = 0;
+  ['q1','q2','q3','q4','q5'].forEach(k=>{
+    const supplied = (document.getElementById(`fp-${k}`)?.value || '').trim().toLowerCase();
+    const expected = (userObj.questions && (userObj.questions[k] || '')).trim().toLowerCase();
+    if(supplied && expected && supplied === expected) correct++;
+  });
+  if(correct < 2){ msg.textContent = `Only ${correct} correct — you must answer at least 2 correctly.`; return; }
+  if(!validPassword(newpw)){ msg.textContent = 'New password does not meet policy (min 10, upper, lower, digit, special).'; return; }
+  // set new password
+  userObj.password = newpw;
+  saveUser(userObj);
+  msg.textContent = 'Password reset — you can now login with the new password.';
+}
+
+/* ---------------- Lab state helpers (profile-aware) ---------------- */
 function makeLabKey(labId){ return `ekasi_lab_state_${currentProfile || 'default'}_${labId}`; }
 function loadState(labId){
   try{
-    profileChecked();
+    if(!currentProfile) throw new Error('no profile');
     const raw = localStorage.getItem(makeLabKey(labId));
-    if(!raw) return null;
-    return JSON.parse(raw);
+    return raw ? JSON.parse(raw) : null;
   }catch(e){ return null; }
 }
 function saveState(labId, state){
-  try{ profileChecked(); localStorage.setItem(makeLabKey(labId), JSON.stringify(state)); }catch(e){}
+  try{
+    if(!currentProfile) throw new Error('no profile');
+    localStorage.setItem(makeLabKey(labId), JSON.stringify(state));
+  }catch(e){}
 }
 function resetLab(labId){
-  // This wrapper ensures profile is present and will reinitialize UI after clearing storage
-  profileChecked();
+  if(!currentProfile){ alert('Set profile first'); return; }
   if(!confirm('Reset all progress for this lab?')) return;
   localStorage.removeItem(makeLabKey(labId));
-  // re-create a fresh state and re-render the lab
-  const areaMap = {
-    cmd:{data:cmdExercises},
-    linux:{data:linuxExercises},
-    task:{data:taskExercisesData},
-    event:{data:eventExercisesData},
-    defender:{data:defenderExercisesData}
-  };
-  const template = areaMap[labId];
-  if(template){
-    const fresh = {
-      startTime: null,
-      endTime: null,
-      exercises: template.data.map(()=>({attempts:0,memoClicked:false,memoClickedBeforeAttempt:false,completedAt:null}))
-    };
-    // save a fresh state (so UI sees it)
-    try{ localStorage.setItem(makeLabKey(labId), JSON.stringify(fresh)); }catch(e){}
-  } else {
-    localStorage.removeItem(makeLabKey(labId));
-  }
   initLab(labId);
   renderScoreboard();
 }
 
-/* ---------- scoring same engine as before, now profile-aware ---------- */
+/* ---------- scoring engine ---------- */
 function computeScore(state){
   if(!state) return {score:0,totalSeconds:0,completed:0,total:0,memoBefore:false,anyMemoUsed:false};
   const exercises = state.exercises || [];
@@ -332,7 +544,7 @@ function closeModal(){ document.getElementById('modal-root').style.display='none
 
 /* ---------- CSV export ---------- */
 function downloadReport(labId){
-  profileChecked();
+  if(!currentProfile){ alert('Set profile first'); return; }
   const state = loadState(labId);
   if(!state){ alert('No data to export'); return; }
   const { score, totalSeconds, completed, total } = computeScore(state);
@@ -349,19 +561,13 @@ function downloadReport(labId){
 /* ---------- Accept multiple answers helper ---------- */
 function normalizeAnswer(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
 function isAnswerMatch(user, answer){
-  // answer may be string or array
   const u = normalizeAnswer(user);
   if(!u) return false;
-  if(Array.isArray(answer)){
-    return answer.map(normalizeAnswer).some(a=>a === u);
-  } else {
-    return normalizeAnswer(answer) === u;
-  }
+  if(Array.isArray(answer)) return answer.map(normalizeAnswer).some(a=>a === u);
+  else return normalizeAnswer(answer) === u;
 }
 
-/* ========== LAB Data (with multi-answer support where useful) ========== */
-/* Each answer may be a string or an array of strings (aliases) */
-
+/* ========== LAB Data (12 exercises each) ========== */
 /* CMD */
 const cmdExercises = [
   {scenario:"1) The helpdesk reports no internet access on one PC. Test basic connectivity to Google.", answer:["ping google.com","ping www.google.com"], memo:"Use ping to check network reachability: ping google.com"},
@@ -454,14 +660,11 @@ function initLab(labId){
   const entry = areaMap[labId];
   const area = document.getElementById(entry.areaId);
   area.innerHTML = '';
-
   if(!currentProfile){
     area.innerHTML = `<div class="meta">Please enter a profile name on Home and click "Use Profile" to start this lab.</div>`;
     document.getElementById(entry.statusId).textContent = 'No profile selected';
     return;
   }
-
-  // load or create state
   let state = loadState(labId);
   if(!state){
     state = {
@@ -471,8 +674,6 @@ function initLab(labId){
     };
     saveState(labId, state);
   }
-
-  // render each exercise
   entry.data.forEach((ex, idx)=>{
     const exState = state.exercises[idx];
     const exDiv = document.createElement('div');
@@ -616,7 +817,7 @@ function renderScoreboard(){
 
 /* quick view modal for lab report */
 function showLabReport(labId){
-  profileChecked();
+  if(!currentProfile){ alert('Set profile first'); return; }
   const st = loadState(labId);
   if(!st){ alert('No data'); return; }
   const res = computeScore(st);
@@ -633,43 +834,14 @@ function showLabReport(labId){
   showModal(html);
 }
 
-/* initialize all labs when profile is set or page loads */
-['cmd','linux','task','event','defender'].forEach(id=>{
-  document.addEventListener('DOMContentLoaded', ()=>{ /* placeholder */ });
-});
-
-/* expose functions globally */
-window.resetLab = function(l){ if(!currentProfile){ alert('Set profile first'); return; } resetLab(l); }
-window.downloadReport = function(l){ if(!currentProfile){ alert('Set profile first'); return; } downloadReport(l); }
-
-/* small helper: ensure profile set when page interaction */
-function profileChecked(){
-  if(!currentProfile){
-    alert('Please set a profile on the Home tab and click "Use Profile" first.');
-    throw new Error('No profile set');
-  }
-}
-
-/* When profile is set, initialize labs */
+/* When profile is set, initialize labs & render scoreboard */
 (function watchProfileInput(){
-  const input = document.getElementById('profile-name');
-  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ setProfile(); }});
+  const input = document.getElementById('profile-show'); // placeholder
 })();
 
-/* After profile set we must init labs & render scoreboard */
-const _oldSetProfile = setProfile;
-setProfile = function(){
-  const name = (document.getElementById('profile-name').value || '').trim();
-  if(!name){ alert('Type a name for the profile'); return; }
-  currentProfile = name.replace(/\s+/g,'_').toLowerCase();
-  document.getElementById('profile-show').textContent = `Profile: ${name}`;
-  ['cmd','linux','task','event','defender'].forEach(initLab);
-  renderScoreboard();
-};
-
-/* On first load, show placeholder profile message */
-document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('profile-show').textContent = ''; });
+/* On first load, ensure auth visible */
+document.addEventListener('DOMContentLoaded', ()=>{ show('auth'); });
 
 </script>
 </body>
-            </html>
+  </html>
