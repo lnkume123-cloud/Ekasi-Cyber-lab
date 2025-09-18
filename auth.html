@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ekasi Cyber Labs — Login</title>
+  <style>
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b0f14;color:#e5eef7;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .auth-box{background:#121821;padding:20px;border-radius:12px;max-width:400px;width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+    h2{margin-top:0;color:#6ee7ff;text-align:center}
+    .row{margin-bottom:12px}
+    input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:#07101a;color:#e5eef7}
+    .btn{padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#e5eef7;cursor:pointer}
+    .btn.full{width:100%}
+    .note{color:#9fb3c8;font-size:13px;margin-top:8px;text-align:center}
+    label{font-size:14px;color:#9fb3c8}
+  </style>
+</head>
+<body>
+  <div class="auth-box">
+    <h2>Ekasi Labs Login</h2>
+    <div id="tabs">
+      <button class="btn" onclick="renderTab('login')">Login</button>
+      <button class="btn" onclick="renderTab('register')">Register</button>
+      <button class="btn" onclick="renderTab('forgot')">Forgot?</button>
+    </div>
+    <div id="auth-content" style="margin-top:12px"></div>
+  </div>
+
+<script>
+const ACC_KEY = 'ekasi_accounts_v1';
+const LOGGED_IN_KEY = 'ekasi_logged_in_user_v1';
+
+function hashString(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),16777619);}return(h>>>0).toString(16);}
+function getAccounts(){try{const raw=localStorage.getItem(ACC_KEY);return raw?JSON.parse(raw):{};}catch(e){return{};}}
+function saveAccounts(map){localStorage.setItem(ACC_KEY,JSON.stringify(map));}
+
+function renderTab(tab){
+  const c=document.getElementById('auth-content');
+  if(tab==='login'){
+    c.innerHTML=`
+      <div class="row"><input id="login-username" placeholder="Username"></div>
+      <div class="row"><input id="login-password" placeholder="Password" type="password">
+        <label><input type="checkbox" onclick="toggleShow('login-password')"> Show</label>
+      </div>
+      <div class="row"><label><input type="checkbox" id="auto-login"> Remember me (auto-login)</label></div>
+      <button class="btn full" onclick="doLogin()">Login</button>
+      <div class="note">No account? Click Register.</div>`;
+  }
+  else if(tab==='register'){
+    c.innerHTML=`
+      <div class="row"><input id="reg-username" placeholder="Username (≥8, 1 uppercase, 1 number, 1 special)"></div>
+      <div class="row"><input id="reg-password" placeholder="Password" type="password">
+        <label><input type="checkbox" onclick="toggleShow('reg-password')"> Show</label>
+      </div>
+      <div class="row"><input id="reg-password2" placeholder="Confirm password" type="password"></div>
+      <div class="row"><input id="q1" placeholder="Question 1"><input id="a1" placeholder="Answer 1"></div>
+      <div class="row"><input id="q2" placeholder="Question 2"><input id="a2" placeholder="Answer 2"></div>
+      <div class="row"><input id="q3" placeholder="Question 3"><input id="a3" placeholder="Answer 3"></div>
+      <button class="btn full" onclick="doRegister()">Register</button>`;
+  }
+  else if(tab==='forgot'){
+    c.innerHTML=`
+      <div class="row"><input id="fp-username" placeholder="Username"></div>
+      <div class="row"><input id="fp-a1" placeholder="Answer 1"></div>
+      <div class="row"><input id="fp-a2" placeholder="Answer 2"></div>
+      <div class="row"><input id="fp-a3" placeholder="Answer 3"></div>
+      <div class="row"><input id="fp-newpass" placeholder="New password" type="password"></div>
+      <button class="btn full" onclick="doForgot()">Reset Password</button>`;
+  }
+}
+
+function usernameValid(u){return u.length>=8&&/[A-Z]/.test(u)&&/[0-9]/.test(u)&&/[^A-Za-z0-9]/.test(u);}
+function passwordValid(p){return p.length>=8&&/[A-Z]/.test(p)&&/[a-z]/.test(p)&&/[0-9]/.test(p)&&/[^A-Za-z0-9]/.test(p);}
+function toggleShow(id){const el=document.getElementById(id);el.type=el.type==='password'?'text':'password';}
+
+function doRegister(){
+  const u=document.getElementById('reg-username').value.trim();
+  const p=document.getElementById('reg-password').value;
+  const p2=document.getElementById('reg-password2').value;
+  if(!usernameValid(u)){alert("Invalid username");return;}
+  if(!passwordValid(p)){alert("Weak password");return;}
+  if(p!==p2){alert("Passwords don't match");return;}
+  const accounts=getAccounts();
+  if(accounts[u]){alert("User exists");return;}
+  const salt=Math.random().toString(36).slice(2,10);
+  accounts[u]={pwHash:hashString(p+salt),salt,questions:[
+    {q:document.getElementById('q1').value,aHash:hashString(document.getElementById('a1').value.toLowerCase()+salt)},
+    {q:document.getElementById('q2').value,aHash:hashString(document.getElementById('a2').value.toLowerCase()+salt)},
+    {q:document.getElementById('q3').value,aHash:hashString(document.getElementById('a3').value.toLowerCase()+salt)},
+  ]};
+  saveAccounts(accounts);
+  alert("Account created. Please login.");
+  renderTab('login');
+}
+function doLogin(){
+  const u=document.getElementById('login-username').value.trim();
+  const p=document.getElementById('login-password').value;
+  const auto=document.getElementById('auto-login').checked;
+  const acc=getAccounts()[u];
+  if(!acc){alert("No such user");return;}
+  if(hashString(p+acc.salt)!==acc.pwHash){alert("Wrong password");return;}
+  localStorage.setItem(LOGGED_IN_KEY,u);
+  if(auto) localStorage.setItem(LOGGED_IN_KEY+"_auto","1");
+  else localStorage.removeItem(LOGGED_IN_KEY+"_auto");
+  window.location.href="Ekasilab.html";
+}
+function doForgot(){
+  const u=document.getElementById('fp-username').value.trim();
+  const a1=document.getElementById('fp-a1').value.toLowerCase();
+  const a2=document.getElementById('fp-a2').value.toLowerCase();
+  const a3=document.getElementById('fp-a3').value.toLowerCase();
+  const newp=document.getElementById('fp-newpass').value;
+  const acc=getAccounts()[u];
+  if(!acc){alert("No such user");return;}
+  let correct=0;
+  [a1,a2,a3].forEach((a,i)=>{if(hashString(a+acc.salt)===acc.questions[i].aHash)correct++;});
+  if(correct<2){alert("Need at least 2 correct answers");return;}
+  if(!passwordValid(newp)){alert("Weak new password");return;}
+  const salt=Math.random().toString(36).slice(2,10);
+  acc.salt=salt;acc.pwHash=hashString(newp+salt);
+  saveAccounts(getAccounts());
+  alert("Password reset. Please login.");
+  renderTab('login');
+}
+renderTab('login');
+</script>
+</body>
+</html>
