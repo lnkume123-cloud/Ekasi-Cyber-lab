@@ -42,6 +42,10 @@
     .muted{color:var(--muted);font-size:13px}
     @media (max-width:800px){.auth-grid{grid-template-columns:1fr}}
     @media (max-width:640px){header h1{font-size:18px}; .banner{flex-direction:column;align-items:flex-start}}
+    /* small textareas or compact styling */
+    .compact-row{display:flex;gap:8px;align-items:center}
+    .compact-row input[type="text"]{flex:1}
+    .muted-sm{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -60,7 +64,7 @@
   </header>
 
   <div class="wrap">
-    <!-- AUTH PAGE (separate screen) -->
+    <!-- AUTH PAGE -->
     <section id="auth" class="active">
       <div class="lab-card">
         <h2>Welcome — Login or Register</h2>
@@ -72,7 +76,7 @@
               <label class="muted">Username</label>
               <input id="login-username" type="text" placeholder="username">
               <label class="muted">Password</label>
-              <div style="display:flex;gap:8px">
+              <div style="display:flex;gap:8px;align-items:center">
                 <input id="login-password" type="password" placeholder="password">
                 <label style="display:flex;align-items:center;gap:6px;">
                   <input id="login-showpw" type="checkbox" onchange="document.getElementById('login-password').type = this.checked ? 'text' : 'password'"> Show
@@ -104,15 +108,15 @@
                 <div class="muted">Security questions (answers kept private on your device). Provide honest answers — you'll need at least 2 correct to reset password.</div>
                 <div style="margin-top:8px">
                   <label class="muted">1) What do you want to achieve with this learning app?</label>
-                  <input id="q1" type="text">
+                  <input id="q1" type="text" placeholder="Your answer">
                   <label class="muted">2) What are your hobbies?</label>
-                  <input id="q2" type="text">
+                  <input id="q2" type="text" placeholder="Your answer">
                   <label class="muted">3) Will you check out my cybersecurity ebook?</label>
-                  <input id="q3" type="text">
+                  <input id="q3" type="text" placeholder="Yes/No">
                   <label class="muted">4) How old are you?</label>
-                  <input id="q4" type="text">
+                  <input id="q4" type="text" placeholder="Your answer">
                   <label class="muted">5) What hidden talent do you want to unlock in the future?</label>
-                  <input id="q5" type="text">
+                  <input id="q5" type="text" placeholder="Your answer">
                 </div>
               </div>
 
@@ -129,7 +133,7 @@
       </div>
     </section>
 
-    <!-- FORGOT PASSWORD SCREEN (modal-like area) -->
+    <!-- FORGOT PASSWORD SCREEN -->
     <section id="forgot" style="display:none">
       <div class="lab-card">
         <h2>Forgot Password — Recover</h2>
@@ -316,7 +320,7 @@ function sanitize(s){ return s?String(s).replace(/[<>&"'`]/g,c=>({'<':'&lt;','>'
   Format:
    {
      username: "User",
-     password: "..." (stored plaintext — local only; replace with hash if you want),
+     password: "..." (stored local-only),
      questions: {q1:..., q2:..., q3:..., q4:..., q5:...},
      autoLogin: true/false
    }
@@ -366,7 +370,7 @@ function handleRegister(){
   if(!validPassword(p)){ msgEl.textContent = 'Password invalid — min 10 chars, uppercase, lowercase, digit, special char required.'; return; }
   if(!q1 || !q2 || !q3 || !q4 || !q5){ msgEl.textContent = 'Please answer all 5 questions.'; return; }
   if(loadUser(u)){ msgEl.textContent = 'Username already exists — choose another.'; return; }
-  const userObj = { username:u, password:p, questions:{q1,q2,q3,q4,q5}, autoLogin:false };
+  const userObj = { username:u, password:p, questions:{q1:q1.trim(),q2:q2.trim(),q3:q3.trim(),q4:q4.trim(),q5:q5.trim()}, autoLogin:false };
   if(saveUser(userObj)){
     msgEl.textContent = 'Registered successfully. You can now login.';
     // pre-fill login
@@ -447,7 +451,7 @@ function startForgot(){
   const container = document.getElementById('fp-questions'); container.innerHTML = '';
   ['q1','q2','q3','q4','q5'].forEach(k=>{
     const label = document.createElement('label'); label.className='muted';
-    label.textContent = userObj.questions[k] ? (k + ':') : (k + ':');
+    label.textContent = (k + ':');
     const input = document.createElement('input');
     input.type = 'text';
     input.id = `fp-${k}`;
@@ -499,6 +503,7 @@ function resetLab(labId){
   if(!currentProfile){ alert('Set profile first'); return; }
   if(!confirm('Reset all progress for this lab?')) return;
   localStorage.removeItem(makeLabKey(labId));
+  // re-init the lab UI
   initLab(labId);
   renderScoreboard();
 }
@@ -661,7 +666,7 @@ function initLab(labId){
   const area = document.getElementById(entry.areaId);
   area.innerHTML = '';
   if(!currentProfile){
-    area.innerHTML = `<div class="meta">Please enter a profile name on Home and click "Use Profile" to start this lab.</div>`;
+    area.innerHTML = `<div class="meta">Please login and open the Home tab to start this lab.</div>`;
     document.getElementById(entry.statusId).textContent = 'No profile selected';
     return;
   }
@@ -836,7 +841,7 @@ function showLabReport(labId){
 
 /* When profile is set, initialize labs & render scoreboard */
 (function watchProfileInput(){
-  const input = document.getElementById('profile-show'); // placeholder
+  // nothing to do; UI driven by loginSuccess
 })();
 
 /* On first load, ensure auth visible */
