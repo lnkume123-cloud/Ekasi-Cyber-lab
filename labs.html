@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ekasi Cyber Labs — Labs & Rewards</title>
+<style>
+  :root{--bg:#0b0f14;--card:#121821;--accent:#6ee7ff;--muted:#9fb3c8}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#e5eef7;-webkit-font-smoothing:antialiased}
+  header{padding:12px 14px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);display:flex;justify-content:space-between;align-items:center}
+  header h1{margin:0;color:var(--accent)}
+  nav{display:flex;gap:8px;padding:10px;flex-wrap:wrap;justify-content:center}
+  nav button{background:none;border:1px solid rgba(255,255,255,.04);color:var(--accent);padding:8px 10px;border-radius:8px;cursor:pointer}
+  .wrap{max-width:1100px;margin:18px auto;padding:12px}
+  .lab-card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:12px}
+  .exercise{border-radius:8px;background:#071013;padding:10px;margin:10px 0;border:1px solid rgba(255,255,255,.03)}
+  .output{background:#02060a;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;color:var(--accent);min-height:44px}
+  input[type="text"], input[type="password"], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:#07101a;color:var(--text);margin-top:8px}
+  .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);margin-top:8px;cursor:pointer}
+  .small{padding:6px 10px;font-size:13px}
+  .profile-area{display:flex;gap:12px;align-items:center}
+  .avatar{width:72px;height:72px;border-radius:10px;background:#0b0f14;border:1px solid #333;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .muted{color:var(--muted);font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.03);text-align:left}
+  .score-badge{padding:6px 10px;border-radius:8px;background:linear-gradient(90deg,var(--accent),#9b83ff);color:#071028;font-weight:700}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(3,6,10,0.7);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .modal{background:#071219;padding:18px;border-radius:12px;max-width:720px;width:94%;border:1px solid rgba(255,255,255,.04)}
+  .meta{color:var(--muted);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Ekasi Cyber Labs — Labs & Rewards</h1>
+    <div id="user-area"></div>
+  </header>
+
+  <nav id="top-nav">
+    <button onclick="show('home')">Home</button>
+    <button onclick="show('profile')">Profile</button>
+    <button onclick="show('cmd')">CMD</button>
+    <button onclick="show('linux')">Linux</button>
+    <button onclick="show('task')">Task Manager</button>
+    <button onclick="show('event')">Event Viewer</button>
+    <button onclick="show('defender')">Defender</button>
+    <button onclick="show('scoreboard')">Leaderboard</button>
+    <button onclick="logout()">Logout</button>
+  </nav>
+
+  <div class="wrap">
+    <section id="home" class="lab-card">
+      <h2>Welcome</h2>
+      <div class="profile-area">
+        <div class="avatar" id="profile-avatar"></div>
+        <div>
+          <div id="profile-username" style="font-weight:700"></div>
+          <div class="muted" id="profile-balance"></div>
+        </div>
+      </div>
+      <p class="muted">Complete exercises, login daily to earn rewards and climb the leaderboard.</p>
+    </section>
+
+    <section id="profile" class="lab-card" style="display:none">
+      <h2>Profile & Customization</h2>
+      <div>
+        <label class="muted">Upload avatar image (PNG/JPG)</label>
+        <input type="file" id="avatar-file" accept="image/*">
+        <div style="margin-top:10px">
+          <button class="btn small" onclick="saveAvatar()">Save Avatar</button>
+          <button class="btn small" onclick="clearAvatar()">Clear Avatar</button>
+        </div>
+        <p class="muted">Coins can buy clothing overlays. Avatars are stored locally as data URLs.</p>
+
+        <h3 style="margin-top:12px">Account rewards</h3>
+        <div class="muted" id="rewards-display"></div>
+        <div style="margin-top:8px">
+          <button class="btn small" onclick="spendForHint()">Buy Hint (cost: 1 diamond OR 50 coins)</button>
+          <button class="btn small" onclick="useKeyToUnlockMemos()">Use Key to Unlock Memos</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Labs -->
+    <section id="cmd" class="lab-card" style="display:none">
+      <h2>CMD Lab</h2>
+      <div id="cmd-exercises-area"></div>
+      <div id="cmd-status" class="muted"></div>
+    </section>
+
+    <section id="linux" class="lab-card" style="display:none">
+      <h2>Linux Lab</h2>
+      <div id="linux-exercises-area"></div>
+      <div id="linux-status" class="muted"></div>
+    </section>
+
+    <section id="task" class="lab-card" style="display:none">
+      <h2>Task Manager</h2>
+      <div id="task-exercises-area"></div>
+      <div id="task-status" class="muted"></div>
+    </section>
+
+    <section id="event" class="lab-card" style="display:none">
+      <h2>Event Viewer</h2>
+      <div id="event-exercises-area"></div>
+      <div id="event-status" class="muted"></div>
+    </section>
+
+    <section id="defender" class="lab-card" style="display:none">
+      <h2>Defender</h2>
+      <div id="defender-exercises-area"></div>
+      <div id="defender-status" class="muted"></div>
+    </section>
+
+    <section id="scoreboard" class="lab-card" style="display:none">
+      <h2>Leaderboard & Daily Prizes</h2>
+      <div class="muted">Top users by today's logins. Click "Assign Daily Prizes" to apply prizes.</div>
+      <div style="margin-top:10px">
+        <button class="btn small" onclick="renderLeaderboard()">Refresh Leaderboard</button>
+        <button class="btn small" onclick="assignDailyPrizes()">Assign Daily Prizes</button>
+      </div>
+      <div id="leaderboard-area" style="margin-top:12px"></div>
+    </section>
+
+  </div>
+
+  <div id="modal-root" style="display:none"></div>
+
+<script>
+/* Shared keys and helpers (must match login.html ACC_KEY) */
+const ACC_KEY = 'ekasi_accounts_v3';
+const LOGIN_TRACK_KEY = 'ekasi_login_stats_v1';
+const LOGGED_IN_KEY = 'ekasi_logged_in_user_v3';
+
+// utility to read accounts
+function getAccounts(){ try{ return JSON.parse(localStorage.getItem(ACC_KEY) || '{}'); }catch(e){ return {}; } }
+function saveAccounts(m){ localStorage.setItem(ACC_KEY, JSON.stringify(m)); }
+
+// ensure logged in
+let currentUser = localStorage.getItem(LOGGED_IN_KEY);
+if(!currentUser){ window.location.href = 'login.html'; } // force login if missing
+document.getElementById('profile-username').textContent = currentUser;
+document.getElementById('user-area').textContent = currentUser;
+
+// load user object or redirect if missing
+const accounts = getAccounts();
+if(!accounts[currentUser]){ alert('User not found, please login again'); localStorage.removeItem(LOGGED_IN_KEY); window.location.href='login.html'; }
+
+function show(id){
+  document.querySelectorAll('.wrap section, .lab-card').forEach(s=>s.style.display='none');
+  const el = document.getElementById(id);
+  if(el) el.style.display = id==='home' ? 'block' : 'block';
+  // special: show nav
+  if(id==='home'){ document.getElementById('top-nav').style.display = 'flex'; }
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='scoreboard') renderLeaderboard();
+}
+
+/* Profile avatar handling */
+function saveAvatar(){
+  const file = document.getElementById('avatar-file').files[0];
+  if(!file){ alert('Select an image first'); return; }
+  const reader = new FileReader();
+  reader.onload = function(){ accounts[currentUser].profile = accounts[currentUser].profile || {}; accounts[currentUser].profile.avatar = reader.result; saveAccounts(accounts); renderProfile(); alert('Avatar saved'); };
+  reader.readAsDataURL(file);
+}
+function clearAvatar(){ accounts[currentUser].profile = accounts[currentUser].profile || {}; accounts[currentUser].profile.avatar = null; saveAccounts(accounts); renderProfile(); }
+
+function renderProfile(){
+  const acc = getAccounts()[currentUser];
+  const avatarDiv = document.getElementById('profile-avatar');
+  avatarDiv.innerHTML = '';
+  if(acc && acc.profile && acc.profile.avatar){
+    const img = document.createElement('img'); img.src = acc.profile.avatar; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
+    avatarDiv.appendChild(img);
+  } else {
+    avatarDiv.textContent = currentUser[0] ? currentUser[0].toUpperCase() : 'U';
+  }
+  const r = acc.rewards || {coins:0,diamonds:0,keys:0,hints:0,totalLogins:0};
+  document.getElementById('profile-balance').textContent = `Coins: ${r.coins} • Diamonds: ${r.diamonds} • Keys: ${r.keys} • Hints: ${r.hints} • Logins: ${r.totalLogins||0}`;
+  document.getElementById('rewards-display').textContent = `Coins: ${r.coins} | Diamonds: ${r.diamonds} | Keys: ${r.keys} | Hints: ${r.hints}`;
+}
+
+/* Spend/buy hints */
+function spendForHint(){
+  const accs = getAccounts();
+  const acc = accs[currentUser];
+  if(acc.rewards.diamonds >= 1){
+    acc.rewards.diamonds -= 1;
+    acc.rewards.hints = (acc.rewards.hints || 0) + 1;
+    saveAccounts(accs);
+    renderProfile();
+    alert('Purchased 1 hint using 1 diamond.');
+    return;
+  }
+  if(acc.rewards.coins >= 50){
+    acc.rewards.coins -= 50;
+    acc.rewards.hints = (acc.rewards.hints || 0) + 1;
+    saveAccounts(accs);
+    renderProfile();
+    alert('Purchased 1 hint using 50 coins.');
+    return;
+  }
+  alert('Not enough diamonds or coins. Cost: 1 diamond OR 50 coins.');
+}
+
+/* Use a key to unlock memos globally for this user (unlimited until keys set to 0) */
+function useKeyToUnlockMemos(){
+  const accs = getAccounts();
+  const acc = accs[currentUser];
+  if((acc.rewards.keys || 0) <= 0){ alert('No keys available. Keys can be awarded from leaderboard prizes.'); return; }
+  // mark user as key-holder (we record unlimitedKey=true)
+  acc.rewards.unlimitedKey = true;
+  saveAccounts(accs);
+  renderProfile();
+  alert('You now have unlimited memo access (keys used to unlock).');
+}
+
+/* Lab state helpers (per-profile) */
+function makeLabKey(lab){ return `ekasi_lab_state_${currentUser}_${lab}`; }
+function loadState(lab){ try{ const raw = localStorage.getItem(makeLabKey(lab)); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+function saveState(lab,state){ localStorage.setItem(makeLabKey(lab), JSON.stringify(state)); }
+function resetLab(lab){ if(!confirm('Reset progress for this lab?')) return; localStorage.removeItem(makeLabKey(lab)); initLab(lab); }
+
+/* Compute score */
+function computeScore(state){
+  if(!state) return {score:0,completed:0,total:0};
+  const total = state.exercises.length;
+  const completed = state.exercises.filter(e=>e.completedAt).length;
+  const score = Math.round((completed/total)*100);
+  return {score,completed,total};
+}
+
+/* Exercises (12 each) — kept the same scenarios and answers you used earlier */
+const cmdExercises = [
+  {scenario:"1) The helpdesk reports no internet access on one PC. Test basic connectivity to Google.", answer:["ping google.com","ping www.google.com"], memo:"Use ping to check network reachability: ping google.com"},
+  {scenario:"2) Check the machine's IPv4 address and interface settings.", answer:["ipconfig","ipconfig /all"], memo:"Windows command to show IP config: ipconfig"},
+  {scenario:"3) The user can't reach a website; show active TCP connections to locate suspicious external IPs.", answer:"netstat", memo:"Use netstat to view active connections"},
+  {scenario:"4) List all files in the current directory to locate a suspicious file.", answer:["dir","dir /b"], memo:"dir lists files in Windows CMD"},
+  {scenario:"5) Move into the Windows system folder to inspect system files.", answer:["cd c:\\windows","cd C:\\Windows"], memo:"Change directory to C:\\Windows using cd C:\\Windows"},
+  {scenario:"6) The screen is cluttered; clear the command window to start fresh.", answer:"cls", memo:"Use cls to clear Command Prompt screen"},
+  {scenario:"7) Create a folder to collect logs named 'LabLogs'.", answer:["mkdir lablogs","mkdir LabLogs"], memo:"Use mkdir <foldername> to create a directory"},
+  {scenario:"8) Remove a temporary test file named 'temp.txt'.", answer:["del temp.txt","del \"temp.txt\""], memo:"Use del <filename> to delete files"},
+  {scenario:"9) Show current system date.", answer:["date /t","date"], memo:"Use date /t to display the date"},
+  {scenario:"10) Show current system time.", answer:["time /t","time"], memo:"Use time /t to display the current time"},
+  {scenario:"11) List running tasks to identify high-CPU processes.", answer:["tasklist"], memo:"tasklist shows running processes in Windows"},
+  {scenario:"12) Simulate scheduling a shutdown in 60 seconds.", answer:["shutdown /s /t 60"], memo:"Use shutdown /s /t <seconds> to schedule a shutdown"}
+];
+const linuxExercises = [
+  {scenario:"1) A server cannot access external sites. Test connectivity to 8.8.8.8.", answer:["ping 8.8.8.8","ping -c 4 8.8.8.8"], memo:"Use ping 8.8.8.8 to test connectivity"},
+  {scenario:"2) List files in the current directory to find config files.", answer:["ls","ls -la"], memo:"ls lists files"},
+  {scenario:"3) Show the current working directory.", answer:"pwd", memo:"pwd prints current directory"},
+  {scenario:"4) Create a directory named 'lab' for practice.", answer:["mkdir lab","mkdir ./lab"], memo:"mkdir <name> creates a directory"},
+  {scenario:"5) Remove a test file named 'old.log'.", answer:["rm old.log","rm ./old.log"], memo:"rm <filename> removes a file"},
+  {scenario:"6) Display the contents of /etc/hosts.", answer:"cat /etc/hosts", memo:"Use cat /etc/hosts to view the hosts file"},
+  {scenario:"7) Create an empty file called todo.txt.", answer:"touch todo.txt", memo:"touch <filename> creates an empty file"},
+  {scenario:"8) Show the current username.", answer:["whoami","id -un"], memo:"whoami prints the current user"},
+  {scenario:"9) Display system information.", answer:"uname -a", memo:"uname -a shows kernel and system info"},
+  {scenario:"10) Show active network interfaces.", answer:["ifconfig","ip addr"], memo:"ifconfig shows network interface info (or ip addr on some systems)"},
+  {scenario:"11) List running processes.", answer:["ps","ps aux"], memo:"ps shows running processes"},
+  {scenario:"12) Simulate shutdown immediately.", answer:["shutdown -h now","sudo shutdown -h now"], memo:"shutdown -h now halts the system (simulated)"}
+];
+const taskExercisesData = [
+  {scenario:"1) An app is not responding. Show the list of processes.", answer:["list","process list"], memo:"Use 'list' to view running processes (simulated)"},
+  {scenario:"2) Check current CPU usage to find spikes.", answer:["cpu"], memo:"Use 'cpu' to show CPU usage"},
+  {scenario:"3) Check memory usage.", answer:["memory"], memo:"Use 'memory' to view memory usage"},
+  {scenario:"4) Kill a misbehaving browser (chrome.exe).", answer:["kill chrome.exe","kill chrome"], memo:"Use 'kill chrome.exe' to terminate the process (simulated)"},
+  {scenario:"5) Show disk usage stats.", answer:["disk"], memo:"Use 'disk' to show disk usage"},
+  {scenario:"6) Show current network activity.", answer:["network"], memo:"Use 'network' to display network usage"},
+  {scenario:"7) List running services.", answer:["services"], memo:"Use 'services' to list services"},
+  {scenario:"8) Show logged-in users.", answer:["users"], memo:"Use 'users' to list logged-in accounts"},
+  {scenario:"9) Show detailed process info.", answer:["details"], memo:"Use 'details' to view process details"},
+  {scenario:"10) Show startup programs.", answer:["startup"], memo:"Use 'startup' to view startup apps"},
+  {scenario:"11) Show performance charts.", answer:["performance"], memo:"Use 'performance' to see performance metrics"},
+  {scenario:"12) Show application history for last 24h.", answer:["history"], memo:"Use 'history' to show app history"}
+];
+const eventExercisesData = [
+  {scenario:"1) Open Event Viewer to inspect logs.", answer:["open"], memo:"Use 'open' to open Event Viewer (simulated)"},
+  {scenario:"2) View System logs.", answer:["view system","view system logs"], memo:"Use 'view system' to show system logs"},
+  {scenario:"3) View Application logs.", answer:["view application"], memo:"Use 'view application' to show application logs"},
+  {scenario:"4) View Security logs.", answer:["view security"], memo:"Use 'view security' to see security-related events"},
+  {scenario:"5) Find recent error events.", answer:["filter error","filter errors"], memo:"Use 'filter error' to filter for errors"},
+  {scenario:"6) Find recent warnings.", answer:["filter warning","filter warnings"], memo:"Use 'filter warning' to show warnings"},
+  {scenario:"7) Show informational logs.", answer:["filter info","filter information"], memo:"Use 'filter info' to show info logs"},
+  {scenario:"8) Export logs for analysis.", answer:["export logs","export"], memo:"Use 'export logs' to export selected logs"},
+  {scenario:"9) Clear logs (simulated).", answer:["clear logs","clear"], memo:"Use 'clear logs' to clear viewer (simulated)"},
+  {scenario:"10) Search logs for a username.", answer:["find user","search user"], memo:"Use 'find user' to search logs for events by user"},
+  {scenario:"11) Generate reliability report.", answer:["reliability report","generate reliability report"], memo:"Use 'reliability report' to create report"},
+  {scenario:"12) Filter critical events only.", answer:["filter critical"], memo:"Use 'filter critical' to show only critical events"}
+];
+const defenderExercisesData = [
+  {scenario:"1) Run a quick malware scan.", answer:["scan","quick scan"], memo:"Use 'scan' to run a quick scan"},
+  {scenario:"2) Run a full system scan.", answer:["fullscan","full scan"], memo:"Use 'fullscan' for full system scan"},
+  {scenario:"3) Check for security intelligence updates.", answer:["update","check update"], memo:"Use 'update' to check for updates"},
+  {scenario:"4) Enable real-time protection.", answer:["realtime","enable realtime"], memo:"Use 'realtime' to enable real-time protection"},
+  {scenario:"5) Disable real-time protection (simulated).", answer:["disable"], memo:"Use 'disable' to turn off protection (simulated)"},
+  {scenario:"6) Enable firewall.", answer:["firewall","enable firewall"], memo:"Use 'firewall' to enable firewall"},
+  {scenario:"7) Check firewall status.", answer:["checkfirewall","firewall status"], memo:"Use 'checkfirewall' to view firewall status"},
+  {scenario:"8) View threat history.", answer:["history","view history"], memo:"Use 'history' to view past threats"},
+  {scenario:"9) Remove a detected threat.", answer:["remove","remove threat"], memo:"Use 'remove' to delete a detected threat"},
+  {scenario:"10) Schedule daily scan at 2 AM.", answer:["schedule","schedule scan"], memo:"Use 'schedule' to plan daily scans"},
+  {scenario:"11) Open Defender settings.", answer:["settings","open settings"], memo:"Use 'settings' to open configuration"},
+  {scenario:"12) Generate a security report.", answer:["report","generate report"], memo:"Use 'report' to create a security report"}
+];
+
+/* Accept match helper */
+function normalizeAnswer(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function isAnswerMatch(user, answer){
+  const u = normalizeAnswer(user); if(!u) return false;
+  if(Array.isArray(answer)) return answer.map(normalizeAnswer).some(a=>a===u);
+  return normalizeAnswer(answer) === u;
+}
+
+/* ---------- Build Lab UI & Logic ---------- */
+function initLab(labId){
+  const areaMap = {
+    cmd:{data:cmdExercises, areaId:'cmd-exercises-area', statusId:'cmd-status'},
+    linux:{data:linuxExercises, areaId:'linux-exercises-area', statusId:'linux-status'},
+    task:{data:taskExercisesData, areaId:'task-exercises-area', statusId:'task-status'},
+    event:{data:eventExercisesData, areaId:'event-exercises-area', statusId:'event-status'},
+    defender:{data:defenderExercisesData, areaId:'defender-exercises-area', statusId:'defender-status'}
+  };
+  const entry = areaMap[labId];
+  const area = document.getElementById(entry.areaId);
+  area.innerHTML = '';
+  let state = loadState(labId);
+  if(!state){
+    state = { startTime: null, endTime: null, exercises: entry.data.map(()=>({attempts:0,completedAt:null,memoViewed:false})) };
+    saveState(labId, state);
+  }
+  entry.data.forEach((ex, idx)=>{
+    const exState = state.exercises[idx];
+    const exDiv = document.createElement('div');
+    exDiv.className = 'exercise';
+    exDiv.id = `${labId}-ex-${idx}`;
+    exDiv.innerHTML = `
+      <div style="font-weight:700;margin-bottom:6px">${ex.scenario}</div>
+      <div id="${labId}-out-${idx}" class="output">${exState.completedAt ? '✅ Completed' : (labId==='cmd' ? 'C:\\> ' : labId==='linux' ? 'student@ekasi:~$ ' : '')}</div>
+      <input id="${labId}-in-${idx}" type="text" placeholder="Type command here" ${exState.completedAt? 'disabled':''}>
+      <div style="margin-top:8px">
+        <button class="btn small" id="${labId}-submit-${idx}">Submit</button>
+        <button class="btn small" id="${labId}-memo-${idx}">Show Memo</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Attempts: <span id="${labId}-att-${idx}">${exState.attempts||0}</span></div>`;
+    area.appendChild(exDiv);
+
+    const inputEl = document.getElementById(`${labId}-in-${idx}`);
+    const submitBtn = document.getElementById(`${labId}-submit-${idx}`);
+    const memoBtn = document.getElementById(`${labId}-memo-${idx}`);
+    const outEl = document.getElementById(`${labId}-out-${idx}`);
+    const attEl = document.getElementById(`${labId}-att-${idx}`);
+
+    submitBtn.addEventListener('click', ()=>{
+      if(!state.startTime) state.startTime = Date.now();
+      const raw = inputEl.value || '';
+      if(!raw.trim()){ alert('Type a command first'); return; }
+      state.exercises[idx].attempts = (state.exercises[idx].attempts||0) + 1;
+      attEl.textContent = state.exercises[idx].attempts;
+      if(isAnswerMatch(raw, ex.answer)){
+        state.exercises[idx].completedAt = Date.now();
+        outEl.textContent += `\n> ${raw}\n✔ Correct`;
+        inputEl.disabled = true;
+        submitBtn.disabled = true;
+        memoBtn.disabled = true;
+      } else {
+        outEl.textContent += `\n> ${raw}\n✖ Incorrect — try again or unlock memo.`;
+      }
+      inputEl.value = '';
+      saveState(labId, state);
+      updateStatus(labId, state);
+      if(state.exercises.every(e=>e.completedAt)){ state.endTime = Date.now(); saveState(labId, state); setTimeout(()=> showLabComplete(labId, state, entry.data), 300); }
+    });
+
+    memoBtn.addEventListener('click', ()=>{
+      // show memo only if lab complete OR user has unlimitedKey
+      const accs = getAccounts(); const acc = accs[currentUser];
+      const hasKey = acc && acc.rewards && (acc.rewards.unlimitedKey || acc.rewards.keys>0);
+      if(state.exercises.every(e=>e.completedAt) || hasKey){
+        alert('💡 Memo: ' + ex.memo);
+        state.exercises[idx].memoViewed = true;
+        saveState(labId, state);
+        updateStatus(labId, state);
+      } else {
+        alert('Memos are revealed only after you complete the lab — or if you have a key (leaderboard prize).');
+      }
+    });
+  });
+  updateStatus(labId, state);
+}
+
+function updateStatus(labId, state){
+  const st = state || loadState(labId);
+  const res = computeScore(st);
+  document.getElementById(`${labId}-status`).textContent = `Progress: ${res.completed}/${res.total} • Score: ${res.score}%`;
+}
+
+/* lab complete modal displays memos (unless restricted) */
+function showLabComplete(labId, state, exercises){
+  const res = computeScore(state);
+  // memos displayed here; if user has unlimitedKey, they are told they have memos unlocked
+  const acc = getAccounts()[currentUser];
+  const hasKey = acc && acc.rewards && (acc.rewards.unlimitedKey || acc.rewards.keys>0);
+  let memosHtml = '';
+  exercises.forEach((ex,i)=>{
+    memosHtml += `<li>${ex.scenario} — <code>${ex.memo}</code></li>`;
+  });
+  const html = `<h3>🎉 ${labId.toUpperCase()} Complete</h3>
+    <p>Score: <span class="score-badge">${res.score}%</span> • Completed ${res.completed}/${res.total}</p>
+    <div style="margin-top:10px"><strong>📘 Memos:</strong><ul>${memosHtml}</ul></div>
+    <div style="margin-top:12px"><button class="btn" onclick="closeModal()">Close</button> <button class="btn" onclick="resetLab('${labId}');closeModal()">Reset Lab</button></div>`;
+  showModal(html);
+}
+
+/* Modal helpers */
+function showModal(inner){ const r=document.getElementById('modal-root'); r.innerHTML = `<div class="modal-backdrop"><div class="modal">${inner}</div></div>`; }
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+
+/* Scoreboard / Leaderboard logic */
+/* Leaderboard sorts users by today's login count (from login.html's LOGIN_TRACK_KEY) */
+function getTodayKey(){ return new Date().toISOString().slice(0,10); }
+function getLoginStats(){ return JSON.parse(localStorage.getItem(LOGIN_TRACK_KEY) || '{}'); }
+
+function renderLeaderboard(){
+  const stats = getLoginStats();
+  const today = getTodayKey();
+  const todayData = stats[today] || { total:0, users: {} };
+  const entries = Object.entries( todayData.users || {} ).map(([user,count]) => ({ user, count }));
+  // fallback: include all users with 0 if not present
+  const accs = getAccounts();
+  Object.keys(accs).forEach(u => { if(!todayData.users[u]) entries.push({ user:u, count:0 }); });
+  entries.sort((a,b)=>b.count - a.count);
+  // top 30
+  const top = entries.slice(0,30);
+  let html = `<table><thead><tr><th>#</th><th>User</th><th>Logins today</th></tr></thead><tbody>`;
+  top.forEach((e,i)=>{ html += `<tr><td>${i+1}</td><td>${e.user}</td><td>${e.count}</td></tr>`; });
+  html += `</tbody></table>`;
+  document.getElementById('leaderboard-area').innerHTML = html;
+}
+
+/* Assign daily prizes based on leaderboard ranking
+   - #1: unlimited keys (unlimited memo unlocks)
+   - #2: 500 coins + 10 diamonds
+   - #3-10: 200 coins
+   - #11-30: 50 coins
+   Also first place is given a flag unlimitedKey=true and coins / diamonds as specified.
+   This function will update accounts in localStorage.
+*/
+function assignDailyPrizes(){
+  const stats = getLoginStats();
+  const today = getTodayKey();
+  const todayData = stats[today] || { users: {} };
+  const accs = getAccounts();
+  const entries = Object.entries(todayData.users || {}).map(([user,count]) => ({ user, count }));
+  entries.sort((a,b)=>b.count - a.count);
+  // apply awards
+  entries.slice(0,30).forEach((e,idx)=>{
+    const rank = idx + 1; const user = e.user;
+    if(!accs[user]) return;
+    accs[user].rewards = accs[user].rewards || {coins:0,diamonds:0,keys:0,hints:0};
+    if(rank === 1){
+      accs[user].rewards.unlimitedKey = true;
+      accs[user].rewards.keys = (accs[user].rewards.keys || 0) + 1; // keep a key counter too
+      accs[user].rewards.coins = (accs[user].rewards.coins || 0) + 999999; // unlimited coins (represent)
+      // mark as champion day
+      accs[user].rewards.lastChampionDay = today;
+    } else if(rank === 2){
+      accs[user].rewards.coins = (accs[user].rewards.coins || 0) + 500;
+      accs[user].rewards.diamonds = (accs[user].rewards.diamonds || 0) + 10;
+    } else if(rank >=3 && rank <=10){
+      accs[user].rewards.coins = (accs[user].rewards.coins || 0) + 200;
+      accs[user].rewards.keys = (accs[user].rewards.keys || 0) + 0;
+    } else {
+      accs[user].rewards.coins = (accs[user].rewards.coins || 0) + 50;
+    }
+  });
+  saveAccounts(accs);
+  alert('Daily prizes assigned to top 30 (if present). Refreshing leaderboard & profile.');
+  renderLeaderboard();
+  renderProfile();
+}
+
+/* Profile render called on load and after updates */
+function renderProfile(){ const acc = getAccounts()[currentUser]; if(!acc) return; document.getElementById('profile-username').textContent = currentUser; renderAvatar(); renderProfileRewards(acc); }
+function renderAvatar(){
+  const acc = getAccounts()[currentUser];
+  const avatarDiv = document.getElementById('profile-avatar');
+  avatarDiv.innerHTML = '';
+  if(acc && acc.profile && acc.profile.avatar){
+    const img = document.createElement('img'); img.src = acc.profile.avatar; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover'; avatarDiv.appendChild(img);
+  } else { avatarDiv.textContent = currentUser[0].toUpperCase(); }
+}
+function renderProfileRewards(acc){
+  const r = acc.rewards || {coins:0,diamonds:0,keys:0,hints:0};
+  document.getElementById('profile-balance').textContent = `Coins: ${r.coins} • Diamonds: ${r.diamonds} • Keys: ${r.keys} • Hints: ${r.hints}`;
+  document.getElementById('rewards-display').textContent = `Coins: ${r.coins} | Diamonds: ${r.diamonds} | Keys: ${r.keys} | Hints: ${r.hints}`;
+}
+
+/* Spend diamond or coins to buy "hint usage" in exercise (handled in labs by checking acc.rewards.hints) */
+function consumeHint(){
+  const accs = getAccounts(); const acc = accs[currentUser];
+  if(acc.rewards.hints && acc.rewards.hints > 0){ acc.rewards.hints--; saveAccounts(accs); renderProfile(); return true; }
+  return false;
+}
+
+/* ---------- Initialize all labs ---------- */
+function initLab(labId){
+  const map = { cmd:cmdExercises, linux:linuxExercises, task:taskExercisesData, event:eventExercisesData, defender:defenderExercisesData };
+  const data = map[labId];
+  const area = document.getElementById(`${labId}-exercises-area`);
+  area.innerHTML = '';
+  let state = loadState(labId);
+  if(!state){
+    state = { startTime: null, endTime: null, exercises: data.map(()=>({attempts:0,completedAt:null,memoViewed:false})) };
+    saveState(labId,state);
+  }
+  data.forEach((ex,i)=>{
+    const exState = state.exercises[i];
+    const div = document.createElement('div'); div.className='exercise';
+    div.innerHTML = `
+      <div style="font-weight:700">${ex.scenario}</div>
+      <div id="${labId}-out-${i}" class="output">${exState.completedAt? '✅ Completed' : ''}</div>
+      <input id="${labId}-in-${i}" ${exState.completedAt ? 'disabled' : ''}>
+      <div style="margin-top:6px">
+        <button class="btn small" id="${labId}-submit-${i}">Submit</button>
+        <button class="btn small" id="${labId}-hint-${i}">Use Hint</button>
+        <button class="btn small" id="${labId}-memo-${i}">Show Memo</button>
+      </div>
+      <div class="muted">Attempts: <span id="${labId}-att-${i}">${exState.attempts||0}</span></div>
+    `;
+    area.appendChild(div);
+    document.getElementById(`${labId}-submit-${i}`).onclick = ()=> {
+      if(!state.startTime) state.startTime = Date.now();
+      const val = document.getElementById(`${labId}-in-${i}`).value.trim();
+      if(!val){ alert('Type a command first'); return; }
+      state.exercises[i].attempts = (state.exercises[i].attempts || 0) + 1;
+      document.getElementById(`${labId}-att-${i}`).textContent = state.exercises[i].attempts;
+      if(isAnswerMatch(val, ex.answer)){
+        state.exercises[i].completedAt = Date.now();
+        document.getElementById(`${labId}-out-${i}`).textContent = '✅ Completed';
+        document.getElementById(`${labId}-in-${i}`).disabled = true;
+        document.getElementById(`${labId}-submit-${i}`).disabled = true;
+        document.getElementById(`${labId}-hint-${i}`).disabled = true;
+        document.getElementById(`${labId}-memo-${i}`).disabled = true;
+      } else {
+        document.getElementById(`${labId}-out-${i}`).textContent = '✖ Incorrect — try again';
+      }
+      document.getElementById(`${labId}-in-${i}`).value = '';
+      saveState(labId,state);
+      updateStatus(labId,state);
+      if(state.exercises.every(e=>e.completedAt)){ state.endTime = Date.now(); saveState(labId,state); setTimeout(()=> showLabComplete(labId,state,data),300); }
+    };
+    document.getElementById(`${labId}-hint-${i}`).onclick = ()=>{
+      // use hints (from rewards) OR buy with coins/diamonds
+      const accs = getAccounts(); const acc = accs[currentUser];
+      if(acc.rewards.hints > 0){
+        acc.rewards.hints--; saveAccounts(accs); renderProfile();
+        alert('Hint: ' + generateHint(ex.answer));
+        return;
+      }
+      // otherwise prompt to buy
+      if(confirm('No hints left. Spend 1 diamond (or 50 coins) to get 1 hint?')){
+        if(acc.rewards.diamonds >= 1){ acc.rewards.diamonds--; acc.rewards.hints = (acc.rewards.hints||0)+1; saveAccounts(accs); renderProfile(); alert('Bought 1 hint — using it now. Hint: '+generateHint(ex.answer)); acc.rewards.hints--; saveAccounts(accs); renderProfile(); return; }
+        if(acc.rewards.coins >= 50){ acc.rewards.coins -= 50; acc.rewards.hints = (acc.rewards.hints||0)+1; saveAccounts(accs); renderProfile(); alert('Bought 1 hint — using it now. Hint: '+generateHint(ex.answer)); acc.rewards.hints--; saveAccounts(accs); renderProfile(); return; }
+        alert('Not enough diamonds or coins.');
+      }
+    };
+    document.getElementById(`${labId}-memo-${i}`).onclick = ()=>{
+      const accs = getAccounts(); const acc = accs[currentUser];
+      const hasKey = acc.rewards && (acc.rewards.unlimitedKey || (acc.rewards.keys && acc.rewards.keys>0));
+      if(state.exercises.every(e=>e.completedAt) || hasKey){
+        alert('💡 Memo: ' + ex.memo);
+        state.exercises[i].memoViewed = true; saveState(labId,state); updateStatus(labId,state);
+      } else {
+        alert('Memos are shown only after finishing the entire lab, unless you have a key (from leaderboard prizes).');
+      }
+    };
+  });
+  updateStatus(labId,state);
+}
+
+/* simple hint generator - for demonstration it returns the memo truncated or a short clue */
+function generateHint(answer){
+  if(Array.isArray(answer)) return 'Try a ping or similar command (e.g. ping google.com).';
+  const s = String(answer);
+  if(s.length < 8) return `Try: ${s.slice(0,Math.min(3,s.length))}...`;
+  return `Hint: starts with "${s.split(' ')[0]}"`;
+}
+
+/* ---------- Status updates ---------- */
+function updateStatus(labId, state){
+  const st = state || loadState(labId); if(!st) return;
+  const res = computeScore(st);
+  document.getElementById(`${labId}-status`).textContent = `Progress: ${res.completed}/${res.total} • Score: ${res.score}%`;
+}
+
+/* ---------- Leaderboard helpers ---------- */
+/* Already implemented: renderLeaderboard, assignDailyPrizes */
+
+/* ---------- Init on load ---------- */
+function logout(){ if(confirm('Log out?')){ localStorage.removeItem(LOGGED_IN_KEY); window.location.href='login.html'; } }
+
+function renderInitial(){
+  // render profile and stats
+  renderProfile();
+  // initialize labs
+  ['cmd','linux','task','event','defender'].forEach(initLab);
+  // show home
+  show('home');
+}
+renderInitial();
+
+</script>
+</body>
+      </html>
