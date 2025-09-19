@@ -1,852 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ekasi Cyber Labs — Gamified (Auth + Labs)</title>
-  <meta name="description" content="Gamified browser labs with auth: CMD, Linux, Task Manager, Event Viewer, Defender. Profiles, memos, scoring, and local progress."/>
-  <style>
-    :root{
-      --bg:#0b0f14;--card:#121821;--accent:#6ee7ff;--text:#e5eef7;--muted:#9fb3c8;
-      --success:#7ef3b3;--danger:#ff6b6b
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
-    header{padding:12px 10px;text-align:center;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
-    header h1{margin:0;font-size:20px;color:var(--accent)}
-    nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px}
-    nav button{background:none;border:1px solid rgba(255,255,255,.04);color:var(--accent);padding:8px 10px;border-radius:8px;cursor:pointer}
-    .wrap{max-width:1100px;margin:18px auto;padding:12px}
-    section{display:none}
-    section.active{display:block}
-    .lab-card{background:var(--card);padding:12px;border-radius:10px;margin-bottom:12px}
-    .exercise{border-radius:8px;background:#071013;padding:10px;margin:10px 0;border:1px solid rgba(255,255,255,.03)}
-    .output{background:#02060a;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;color:var(--accent);min-height:44px}
-    input[type="text"], input[type="password"], input[type="search"], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:#07101a;color:var(--text);margin-top:8px}
-    .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);margin-top:8px;cursor:pointer}
-    .small{padding:6px 10px;font-size:13px}
-    footer{color:#9fb3c8;text-align:center;font-size:13px;margin-top:20px;padding-bottom:24px}
-    .meta{color:var(--muted);font-size:13px;margin-top:8px}
-    .score-badge{display:inline-block;padding:6px 10px;border-radius:8px;background:linear-gradient(90deg,var(--accent),#9b83ff);color:#071028;font-weight:700}
-    .profile-box{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:8px}
-    .profile-box input{max-width:260px}
-    .banner{background:linear-gradient(90deg,#0f1720,#07101a);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:12px}
-    .banner .left{flex:1}
-    .banner img{max-height:72px;border-radius:8px}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(3,6,10,0.7);display:flex;align-items:center;justify-content:center;z-index:9999}
-    .modal{background:#071219;padding:18px;border-radius:12px;max-width:720px;width:94%;border:1px solid rgba(255,255,255,.04);color:var(--text)}
-    .modal h3{margin:0 0 8px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.03);text-align:left}
-    .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .muted{color:var(--muted);font-size:13px}
-    @media (max-width:800px){.auth-grid{grid-template-columns:1fr}}
-    @media (max-width:640px){header h1{font-size:18px}; .banner{flex-direction:column;align-items:flex-start}}
-    /* small textareas or compact styling */
-    .compact-row{display:flex;gap:8px;align-items:center}
-    .compact-row input[type="text"]{flex:1}
-    .muted-sm{font-size:12px;color:var(--muted)}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ekasi Labs — Auth</title>
+<style>
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b0f14;color:#e5eef7;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .auth-box{background:#121821;padding:20px;border-radius:12px;max-width:480px;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+  h2{margin-top:0;color:#6ee7ff;text-align:center}
+  .row{margin-bottom:10px}
+  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:#07101a;color:#e5eef7}
+  .btn{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#e5eef7;cursor:pointer}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+  .muted{color:#9fb3c8;font-size:13px}
+  label{font-size:13px;color:#9fb3c8;display:block;margin-top:6px}
+  .small{font-size:13px;padding:8px}
+</style>
 </head>
 <body>
-  <header>
-    <h1>Ekasi Cyber Labs — Gamified</h1>
-    <nav id="top-nav" style="display:none">
-      <button onclick="show('home')">Home</button>
-      <button onclick="show('cmd')">CMD</button>
-      <button onclick="show('linux')">Linux</button>
-      <button onclick="show('task')">Task Manager</button>
-      <button onclick="show('event')">Event Viewer</button>
-      <button onclick="show('defender')">Defender</button>
-      <button onclick="show('scoreboard')">Scoreboard</button>
-      <button onclick="logout()" style="margin-left:8px">Logout</button>
-    </nav>
-  </header>
-
-  <div class="wrap">
-    <!-- AUTH PAGE -->
-    <section id="auth" class="active">
-      <div class="lab-card">
-        <h2>Welcome — Login or Register</h2>
-        <div class="auth-grid">
-          <div>
-            <h3>Login</h3>
-            <div class="meta">Existing users: login to continue</div>
-            <div style="margin-top:8px">
-              <label class="muted">Username</label>
-              <input id="login-username" type="text" placeholder="username">
-              <label class="muted">Password</label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input id="login-password" type="password" placeholder="password">
-                <label style="display:flex;align-items:center;gap:6px;">
-                  <input id="login-showpw" type="checkbox" onchange="document.getElementById('login-password').type = this.checked ? 'text' : 'password'"> Show
-                </label>
-              </div>
-              <div style="margin-top:8px">
-                <label style="display:flex;align-items:center;gap:8px"><input id="auto-login" type="checkbox"> Auto-login on this device</label>
-              </div>
-              <div style="margin-top:8px;display:flex;gap:8px">
-                <button class="btn small" onclick="handleLogin()">Login</button>
-                <button class="btn small" onclick="showForgot()">Forgot Password</button>
-              </div>
-              <div id="login-msg" class="meta"></div>
-            </div>
-          </div>
-
-          <div>
-            <h3>Register</h3>
-            <div class="meta">Create an account before playing</div>
-            <div style="margin-top:8px">
-              <label class="muted">Username (min 8 chars, 1 uppercase, 1 digit, 1 special)</label>
-              <input id="reg-username" type="text" placeholder="Choose username">
-              <label class="muted">Password (min 10 chars, upper, lower, digit, special)</label>
-              <input id="reg-password" type="password" placeholder="Choose strong password">
-              <label class="muted">Show password</label>
-              <label style="display:flex;align-items:center;gap:8px"><input id="reg-showpw" type="checkbox" onchange="document.getElementById('reg-password').type = this.checked ? 'text' : 'password'"> Show</label>
-
-              <div style="margin-top:8px">
-                <div class="muted">Security questions (answers kept private on your device). Provide honest answers — you'll need at least 2 correct to reset password.</div>
-                <div style="margin-top:8px">
-                  <label class="muted">1) What do you want to achieve with this learning app?</label>
-                  <input id="q1" type="text" placeholder="Your answer">
-                  <label class="muted">2) What are your hobbies?</label>
-                  <input id="q2" type="text" placeholder="Your answer">
-                  <label class="muted">3) Will you check out my cybersecurity ebook?</label>
-                  <input id="q3" type="text" placeholder="Yes/No">
-                  <label class="muted">4) How old are you?</label>
-                  <input id="q4" type="text" placeholder="Your answer">
-                  <label class="muted">5) What hidden talent do you want to unlock in the future?</label>
-                  <input id="q5" type="text" placeholder="Your answer">
-                </div>
-              </div>
-
-              <div style="margin-top:8px;display:flex;gap:8px">
-                <button class="btn small" onclick="handleRegister()">Register</button>
-                <button class="btn small" onclick="clearRegisterForm()">Clear</button>
-              </div>
-              <div id="reg-msg" class="meta"></div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:12px" class="muted">You can register and test everything locally — credentials are stored in your browser's localStorage.</div>
-      </div>
-    </section>
-
-    <!-- FORGOT PASSWORD SCREEN -->
-    <section id="forgot" style="display:none">
-      <div class="lab-card">
-        <h2>Forgot Password — Recover</h2>
-        <div class="meta">Enter username and answer at least 2 of the security questions to reset your password.</div>
-        <div style="margin-top:8px">
-          <label class="muted">Username</label>
-          <input id="fp-username" type="text" placeholder="username">
-          <div id="fp-questions" style="margin-top:12px"></div>
-          <div style="margin-top:8px">
-            <label class="muted">New password</label>
-            <input id="fp-newpw" type="password" placeholder="new password">
-            <label style="display:flex;align-items:center;gap:8px"><input id="fp-showpw" type="checkbox" onchange="document.getElementById('fp-newpw').type=this.checked?'text':'password'"> Show</label>
-          </div>
-          <div style="margin-top:8px;display:flex;gap:8px">
-            <button class="btn small" onclick="startForgot()">Load Questions</button>
-            <button class="btn small" onclick="submitForgot()">Submit & Reset Password</button>
-            <button class="btn small" onclick="showAuth()">Back</button>
-          </div>
-          <div id="fp-msg" class="meta"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- HOME (labs index) -->
-    <section id="home" style="display:none">
-      <div class="lab-card">
-        <div class="profile-box">
-          <div id="profile-show" style="color:var(--muted)"></div>
-        </div>
-
-        <div class="banner" style="margin-bottom:12px">
-          <div class="left">
-            <h3 style="margin:0 0 6px;color:var(--accent)">Get the Ekasi Cybersecurity Ebook</h3>
-            <p style="margin:0;color:var(--muted)">Deep-dive labs, memos, and extended solutions — download the full guide and support the project.</p>
-            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-              <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" rel="noopener noreferrer" class="btn small">Buy Ebook</a>
-              <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" rel="noopener noreferrer" class="btn small">Special Tools (ClickBank)</a>
-            </div>
-          </div>
-          <div style="text-align:right">
-            <img src="https://via.placeholder.com/120x72.png?text=Ebook+Cover" alt="ebook cover">
-          </div>
-        </div>
-
-        <h2>Welcome</h2>
-        <p class="meta">Choose a lab to practice real-world scenarios. Each lab has 12 exercises. Use memos only when needed — they affect your final score. Progress is saved per profile in your browser.</p>
-      </div>
-    </section>
-
-    <!-- CMD LAB -->
-    <section id="cmd" style="display:none">
-      <div class="lab-card">
-        <h2>CMD Lab — Scenarios</h2>
-        <div class="meta">Type the correct command & Submit or press Enter. Multiple accepted answers supported (aliases).</div>
-        <div id="cmd-exercises-area"></div>
-        <div class="meta" id="cmd-status"></div>
-        <div style="margin-top:8px"><button class="btn small" onclick="resetLab('cmd')">Reset CMD Lab</button></div>
-      </div>
-      <div class="banner">
-        <div class="left">
-          <h3>📘 Level Up Your Skills</h3>
-          <p>Get the full Ekasi Cybersecurity Ebook and premium tools for deeper practice.</p>
-          <div style="margin-top:8px">
-            <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
-            <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- LINUX LAB -->
-    <section id="linux" style="display:none">
-      <div class="lab-card">
-        <h2>Linux Lab — Scenarios</h2>
-        <div class="meta">Type the exact Linux command required by each scenario.</div>
-        <div id="linux-exercises-area"></div>
-        <div class="meta" id="linux-status"></div>
-        <div style="margin-top:8px"><button class="btn small" onclick="resetLab('linux')">Reset Linux Lab</button></div>
-      </div>
-      <div class="banner">
-        <div class="left">
-          <h3>📘 Level Up Your Skills</h3>
-          <p>Buy the ebook and pro tools for deeper labs.</p>
-          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
-          <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- TASK MANAGER -->
-    <section id="task" style="display:none">
-      <div class="lab-card">
-        <h2>Task Manager Lab — Scenarios</h2>
-        <div class="meta">Simulated Task Manager actions — type the action keyword then Submit.</div>
-        <div id="task-exercises-area"></div>
-        <div class="meta" id="task-status"></div>
-        <div style="margin-top:8px"><button class="btn small" onclick="resetLab('task')">Reset Task Manager Lab</button></div>
-      </div>
-      <div class="banner">
-        <div class="left">
-          <h3>📘 Level Up Your Skills</h3>
-          <p>Buy the full guide for more practice.</p>
-          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
-          <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- EVENT VIEWER -->
-    <section id="event" style="display:none">
-      <div class="lab-card">
-        <h2>Event Viewer Lab — Scenarios</h2>
-        <div class="meta">Type the correct action/command to inspect or filter logs.</div>
-        <div id="event-exercises-area"></div>
-        <div class="meta" id="event-status"></div>
-        <div style="margin-top:8px"><button class="btn small" onclick="resetLab('event')">Reset Event Viewer Lab</button></div>
-      </div>
-      <div class="banner">
-        <div class="left">
-          <h3>📘 Level Up Your Skills</h3>
-          <p>Full ebook + premium tools for serious learners.</p>
-          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
-          <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- DEFENDER -->
-    <section id="defender" style="display:none">
-      <div class="lab-card">
-        <h2>Windows Defender Lab — Scenarios</h2>
-        <div class="meta">Simulated Defender actions — type commands like <code>scan</code>, <code>update</code>, <code>firewall</code>.</div>
-        <div id="defender-exercises-area"></div>
-        <div class="meta" id="defender-status"></div>
-        <div style="margin-top:8px"><button class="btn small" onclick="resetLab('defender')">Reset Defender Lab</button></div>
-      </div>
-      <div class="banner">
-        <div class="left">
-          <h3>📘 Level Up Your Skills</h3>
-          <p>Buy the ebook for full memos and solutions.</p>
-          <a href="https://sotashe.gumroad.com/l/fpohp" target="_blank" class="btn small">Buy Ebook</a>
-          <a href="https://60db3kpdiaqaxvafskna3rup72.hop.clickbank.net" target="_blank" class="btn small">Get VPN Tool</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- SCOREBOARD -->
-    <section id="scoreboard" style="display:none">
-      <div class="lab-card">
-        <h2>Scoreboard — Profile Progress</h2>
-        <div class="meta">Shows per-lab completion and latest score for the active profile.</div>
-        <div id="scoreboard-area"></div>
-      </div>
-    </section>
-
-    <footer>
-      © <span id="yr"></span> Ekasi Production — Built by Luthando. Educational use only.
-    </footer>
+  <div class="auth-box">
+    <h2>Ekasi Labs — Login / Register</h2>
+    <div class="tabs">
+      <button class="btn" onclick="renderPage('login')">Login</button>
+      <button class="btn" onclick="renderPage('register')">Register</button>
+      <button class="btn" onclick="renderPage('forgot')">Forgot</button>
+    </div>
+    <div id="auth-content"></div>
+    <p class="muted" style="text-align:center;margin-top:12px">Accounts are stored locally in your browser for testing.</p>
   </div>
 
-  <div id="modal-root" style="display:none"></div>
-
 <script>
-/* ---------------- Helpers ---------------- */
-document.getElementById('yr').textContent = new Date().getFullYear();
-function show(id){
-  // hide/ show nav for auth vs app
-  if(id === 'auth' || id === 'forgot'){
-    document.getElementById('top-nav').style.display = 'none';
-  } else {
-    document.getElementById('top-nav').style.display = 'flex';
-  }
-  document.querySelectorAll('section').forEach(s=>s.style.display='none');
-  const el = document.getElementById(id);
-  if(el) el.style.display = 'block';
-  window.scrollTo({top:0,behavior:'smooth'});
-  if(id==='scoreboard') renderScoreboard();
-}
-function sanitize(s){ return s?String(s).replace(/[<>&"'`]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c])):'' }
-
-/* ---------------- Auth / User storage ---------------- */
-/*
-  Users stored in localStorage under key "ekasi_user_{username}"
-  Format:
-   {
-     username: "User",
-     password: "..." (stored local-only),
-     questions: {q1:..., q2:..., q3:..., q4:..., q5:...},
-     autoLogin: true/false
-   }
+/* Keys:
+  - ACC_KEY: map username -> { pwHash, salt, questions: [q1hash,q2hash,q3hash], rewards:{coins, diamonds, keys, hints}, profile:{avatarDataUrl,customizations...} }
+  - LOGIN_TRACK_KEY: track daily logins per-day
+  - LOGGED_IN_KEY: currently logged in username
 */
-function userKey(username){ return `ekasi_user_${username.toLowerCase()}`; }
-function saveUser(obj){ try { localStorage.setItem(userKey(obj.username), JSON.stringify(obj)); return true; } catch(e){ return false; } }
-function loadUser(username){ try{ const raw=localStorage.getItem(userKey(username)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-function deleteUser(username){ try{ localStorage.removeItem(userKey(username)); }catch(e){} }
+const ACC_KEY = 'ekasi_accounts_v3';
+const LOGIN_TRACK_KEY = 'ekasi_login_stats_v1';
+const LOGGED_IN_KEY = 'ekasi_logged_in_user_v3';
 
-/* ---------------- Validation rules ---------------- */
-function validUsername(u){
-  if(!u || u.length < 8) return false;
-  if(!/[A-Z]/.test(u)) return false;
-  if(!/\d/.test(u)) return false;
-  if(!/[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};:'",.<>\/?\\|`~]/.test(u)) return false;
-  return true;
+function hashString(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h = Math.imul(h ^ s.charCodeAt(i), 16777619); } return (h>>>0).toString(16); }
+function getAccounts(){ try{ return JSON.parse(localStorage.getItem(ACC_KEY) || '{}'); }catch(e){ return {}; } }
+function saveAccounts(m){ localStorage.setItem(ACC_KEY, JSON.stringify(m)); }
+
+function usernameValid(u){ return u && u.length>=8 && /[A-Z]/.test(u) && /\d/.test(u) && /[^A-Za-z0-9]/.test(u); }
+function passwordValid(p){ return p && p.length>=8 && /[A-Z]/.test(p) && /[a-z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p); }
+
+function toggleShow(id){ const el=document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+
+function renderPage(tab){
+  const c = document.getElementById('auth-content');
+  if(tab === 'login'){
+    c.innerHTML = `
+      <div class="row"><input id="login-username" placeholder="Username"></div>
+      <div class="row"><input id="login-password" type="password" placeholder="Password">
+        <label style="margin-top:8px"><input type="checkbox" onclick="toggleShow('login-password')"> Show</label>
+      </div>
+      <div class="row"><label style="display:flex;gap:8px;align-items:center"><input id="auto-login" type="checkbox"> Auto-login</label></div>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="doLogin()">Login</button><button class="btn" onclick="renderPage('forgot')">Forgot</button></div>
+      <div id="login-msg" class="muted" style="margin-top:8px"></div>`;
+  } else if(tab === 'register'){
+    c.innerHTML = `
+      <div class="row"><input id="reg-username" placeholder="Username (≥8, 1 upper, 1 digit, 1 special)"></div>
+      <div class="row"><input id="reg-password" type="password" placeholder="Password (≥8, upper, lower, digit, special)"></div>
+      <div class="row"><input id="reg-password2" type="password" placeholder="Confirm password"></div>
+      <p class="muted">Answer these 3 security questions (we store hashed answers).</p>
+      <div class="row"><label>1) What do you want to achieve with this learning app?</label><input id="a1"></div>
+      <div class="row"><label>2) What are your hobbies?</label><input id="a2"></div>
+      <div class="row"><label>3) Will you check out my cybersecurity ebook?</label><input id="a3"></div>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="doRegister()">Register</button><button class="btn" onclick="clearRegisterForm()">Clear</button></div>
+      <div id="reg-msg" class="muted" style="margin-top:8px"></div>`;
+  } else {
+    c.innerHTML = `
+      <div class="row"><input id="fp-username" placeholder="Username"></div>
+      <p class="muted">Answer at least 2 of the same questions you answered during registration.</p>
+      <div class="row"><label>1) What do you want to achieve with this learning app?</label><input id="fa1"></div>
+      <div class="row"><label>2) What are your hobbies?</label><input id="fa2"></div>
+      <div class="row"><label>3) Will you check out my cybersecurity ebook?</label><input id="fa3"></div>
+      <div class="row"><input id="fp-newpass" type="password" placeholder="New password"></div>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="doForgot()">Reset Password</button><button class="btn" onclick="renderPage('login')">Back</button></div>
+      <div id="fp-msg" class="muted" style="margin-top:8px"></div>`;
+  }
 }
-function validPassword(p){
-  if(!p || p.length < 10) return false;
-  if(!/[A-Z]/.test(p)) return false;
-  if(!/[a-z]/.test(p)) return false;
-  if(!/\d/.test(p)) return false;
-  if(!/[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};:'",.<>\/?\\|`~]/.test(p)) return false;
-  return true;
-}
 
-/* ---------------- Auth UI helpers ---------------- */
-function showAuth(){ show('auth'); }
-function showForgot(){ show('forgot'); document.getElementById('fp-msg').textContent=''; document.getElementById('fp-questions').innerHTML=''; document.getElementById('fp-newpw').value=''; document.getElementById('fp-username').value=''; }
-
-/* Register */
 function clearRegisterForm(){
-  ['reg-username','reg-password','q1','q2','q3','q4','q5','reg-msg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('reg-msg').textContent = '';
+  ['reg-username','reg-password','reg-password2','a1','a2','a3','reg-msg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('reg-msg').textContent='';
 }
-function handleRegister(){
+
+function doRegister(){
   const u = (document.getElementById('reg-username').value || '').trim();
-  const p = (document.getElementById('reg-password').value || '').trim();
-  const q1 = (document.getElementById('q1').value || '').trim();
-  const q2 = (document.getElementById('q2').value || '').trim();
-  const q3 = (document.getElementById('q3').value || '').trim();
-  const q4 = (document.getElementById('q4').value || '').trim();
-  const q5 = (document.getElementById('q5').value || '').trim();
+  const p = document.getElementById('reg-password').value || '';
+  const p2 = document.getElementById('reg-password2').value || '';
+  const a1 = (document.getElementById('a1').value || '').trim();
+  const a2 = (document.getElementById('a2').value || '').trim();
+  const a3 = (document.getElementById('a3').value || '').trim();
   const msgEl = document.getElementById('reg-msg');
   msgEl.textContent = '';
-  if(!validUsername(u)){ msgEl.textContent = 'Username invalid — min 8 chars, include uppercase, a digit and a special character.'; return; }
-  if(!validPassword(p)){ msgEl.textContent = 'Password invalid — min 10 chars, uppercase, lowercase, digit, special char required.'; return; }
-  if(!q1 || !q2 || !q3 || !q4 || !q5){ msgEl.textContent = 'Please answer all 5 questions.'; return; }
-  if(loadUser(u)){ msgEl.textContent = 'Username already exists — choose another.'; return; }
-  const userObj = { username:u, password:p, questions:{q1:q1.trim(),q2:q2.trim(),q3:q3.trim(),q4:q4.trim(),q5:q5.trim()}, autoLogin:false };
-  if(saveUser(userObj)){
-    msgEl.textContent = 'Registered successfully. You can now login.';
-    // pre-fill login
-    document.getElementById('login-username').value = u;
-  } else {
-    msgEl.textContent = 'Failed to save user (localStorage issue).';
-  }
-}
-
-/* Login */
-function handleLogin(){
-  const u = (document.getElementById('login-username').value || '').trim();
-  const p = (document.getElementById('login-password').value || '').trim();
-  const auto = document.getElementById('auto-login').checked;
-  const msg = document.getElementById('login-msg');
-  msg.textContent = '';
-  const userObj = loadUser(u);
-  if(!userObj){ msg.textContent = 'No such user.'; return; }
-  if(userObj.password !== p){ msg.textContent = 'Wrong password.'; return; }
-  // set auto login flag
-  userObj.autoLogin = !!auto;
-  saveUser(userObj);
-  loginSuccess(u);
-}
-
-/* Auto-login on load, if present */
-(function attemptAutoLogin(){
-  try{
-    for(let i=0;i<localStorage.length;i++){
-      const key = localStorage.key(i);
-      if(!key) continue;
-      if(key.startsWith('ekasi_user_')){
-        const obj = JSON.parse(localStorage.getItem(key));
-        if(obj && obj.autoLogin){
-          // auto login this user
-          loginSuccess(obj.username);
-          return;
-        }
-      }
-    }
-  }catch(e){}
-})();
-
-/* Login success handler: set currentProfile & show labs */
-let currentProfile = null;
-function loginSuccess(username){
-  currentProfile = username.replace(/\s+/g,'_').toLowerCase();
-  document.getElementById('profile-show').textContent = `Profile: ${username}`;
-  // show top nav and home
-  show('home');
-  // initialize all labs
-  ['cmd','linux','task','event','defender'].forEach(initLab);
-  renderScoreboard();
-  // show nav
-  document.getElementById('top-nav').style.display = 'flex';
-}
-
-/* Logout */
-function logout(){
-  if(confirm('Log out?')) {
-    currentProfile = null;
-    // hide nav, go to auth
-    document.getElementById('top-nav').style.display = 'none';
-    // clear login fields
-    ['login-username','login-password','login-msg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-    show('auth');
-  }
-}
-
-/* Forgot password flow */
-function startForgot(){
-  const u = (document.getElementById('fp-username').value || '').trim();
-  const msg = document.getElementById('fp-msg'); msg.textContent = '';
-  if(!u){ msg.textContent = 'Type a username first.'; return; }
-  const userObj = loadUser(u);
-  if(!userObj){ msg.textContent = 'No such user.'; return; }
-  // render questions with inputs
-  const container = document.getElementById('fp-questions'); container.innerHTML = '';
-  ['q1','q2','q3','q4','q5'].forEach(k=>{
-    const label = document.createElement('label'); label.className='muted';
-    label.textContent = (k + ':');
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = `fp-${k}`;
-    input.placeholder = 'Answer';
-    container.appendChild(label);
-    container.appendChild(input);
-  });
-  msg.textContent = 'Answer at least 2 correctly, then provide new password and click Submit & Reset Password.';
-}
-
-function submitForgot(){
-  const u = (document.getElementById('fp-username').value || '').trim();
-  const newpw = (document.getElementById('fp-newpw').value || '').trim();
-  const msg = document.getElementById('fp-msg'); msg.textContent='';
-  if(!u){ msg.textContent='Username required'; return; }
-  const userObj = loadUser(u);
-  if(!userObj){ msg.textContent='No such user'; return; }
-  // count correct answers
-  let correct = 0;
-  ['q1','q2','q3','q4','q5'].forEach(k=>{
-    const supplied = (document.getElementById(`fp-${k}`)?.value || '').trim().toLowerCase();
-    const expected = (userObj.questions && (userObj.questions[k] || '')).trim().toLowerCase();
-    if(supplied && expected && supplied === expected) correct++;
-  });
-  if(correct < 2){ msg.textContent = `Only ${correct} correct — you must answer at least 2 correctly.`; return; }
-  if(!validPassword(newpw)){ msg.textContent = 'New password does not meet policy (min 10, upper, lower, digit, special).'; return; }
-  // set new password
-  userObj.password = newpw;
-  saveUser(userObj);
-  msg.textContent = 'Password reset — you can now login with the new password.';
-}
-
-/* ---------------- Lab state helpers (profile-aware) ---------------- */
-function makeLabKey(labId){ return `ekasi_lab_state_${currentProfile || 'default'}_${labId}`; }
-function loadState(labId){
-  try{
-    if(!currentProfile) throw new Error('no profile');
-    const raw = localStorage.getItem(makeLabKey(labId));
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){ return null; }
-}
-function saveState(labId, state){
-  try{
-    if(!currentProfile) throw new Error('no profile');
-    localStorage.setItem(makeLabKey(labId), JSON.stringify(state));
-  }catch(e){}
-}
-function resetLab(labId){
-  if(!currentProfile){ alert('Set profile first'); return; }
-  if(!confirm('Reset all progress for this lab?')) return;
-  localStorage.removeItem(makeLabKey(labId));
-  // re-init the lab UI
-  initLab(labId);
-  renderScoreboard();
-}
-
-/* ---------- scoring engine ---------- */
-function computeScore(state){
-  if(!state) return {score:0,totalSeconds:0,completed:0,total:0,memoBefore:false,anyMemoUsed:false};
-  const exercises = state.exercises || [];
-  const total = exercises.length;
-  const completed = exercises.filter(e=>e.completedAt).length;
-  const now = state.endTime || Date.now();
-  const start = state.startTime || now;
-  const totalSeconds = Math.max(1, Math.round((now - start)/1000));
-  let memoBefore = exercises.some(e=>e.memoClickedBeforeAttempt);
-  let anyMemoUsed = exercises.some(e=>e.memoClicked);
-  let base;
-  if(memoBefore) base = 60;
-  else if(anyMemoUsed) base = 65;
-  else base = 70;
-  let bonus = 0;
-  if(memoBefore) bonus = 0;
-  else if(anyMemoUsed){
-    if(totalSeconds < 300) bonus = 10;
-    else if(totalSeconds < 600) bonus = 5;
-  } else {
-    if(totalSeconds < 180) bonus = 30;
-    else if(totalSeconds < 300) bonus = 20;
-    else if(totalSeconds < 600) bonus = 10;
-  }
-  let score = Math.min(100, base + bonus);
-  if(completed < total){
-    const frac = completed / total;
-    score = Math.round((base + bonus) * frac);
-  } else {
-    score = Math.round(score);
-  }
-  return { score, totalSeconds, completed, total, memoBefore, anyMemoUsed };
-}
-
-/* ---------- Modal UI ---------- */
-function showModal(html){ const root = document.getElementById('modal-root'); root.innerHTML = `<div class="modal-backdrop"><div class="modal">${html}</div></div>`; root.style.display='block'; }
-function closeModal(){ document.getElementById('modal-root').style.display='none'; document.getElementById('modal-root').innerHTML=''; }
-
-/* ---------- CSV export ---------- */
-function downloadReport(labId){
-  if(!currentProfile){ alert('Set profile first'); return; }
-  const state = loadState(labId);
-  if(!state){ alert('No data to export'); return; }
-  const { score, totalSeconds, completed, total } = computeScore(state);
-  let csv = `Lab,${labId}\nProfile,${currentProfile}\nScore,${score}\nTimeSeconds,${totalSeconds}\nCompleted,${completed}/${total}\n\nExercise,Attempted,MemoClicked,MemoBeforeAttempt,CompletedAt\n`;
-  state.exercises.forEach((ex,i)=>{
-    csv += `${i+1},"${ex.attempts || 0}",${ex.memoClicked?1:0},${ex.memoClickedBeforeAttempt?1:0},${ex.completedAt?new Date(ex.completedAt).toISOString():""}\n`;
-  });
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `ekasi_${currentProfile}_${labId}_report.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-}
-
-/* ---------- Accept multiple answers helper ---------- */
-function normalizeAnswer(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
-function isAnswerMatch(user, answer){
-  const u = normalizeAnswer(user);
-  if(!u) return false;
-  if(Array.isArray(answer)) return answer.map(normalizeAnswer).some(a=>a === u);
-  else return normalizeAnswer(answer) === u;
-}
-
-/* ========== LAB Data (12 exercises each) ========== */
-/* CMD */
-const cmdExercises = [
-  {scenario:"1) The helpdesk reports no internet access on one PC. Test basic connectivity to Google.", answer:["ping google.com","ping www.google.com"], memo:"Use ping to check network reachability: ping google.com"},
-  {scenario:"2) Check the machine's IPv4 address and interface settings.", answer:["ipconfig","ipconfig /all"], memo:"Windows command to show IP config: ipconfig"},
-  {scenario:"3) The user can't reach a website; show active TCP connections to locate suspicious external IPs.", answer:"netstat", memo:"Use netstat to view active connections"},
-  {scenario:"4) List all files in the current directory to locate a suspicious file.", answer:["dir","dir /b"], memo:"dir lists files in Windows CMD"},
-  {scenario:"5) Move into the Windows system folder to inspect system files.", answer:["cd c:\\windows","cd C:\\Windows"], memo:"Change directory to C:\\Windows using cd C:\\Windows"},
-  {scenario:"6) The screen is cluttered; clear the command window to start fresh.", answer:"cls", memo:"Use cls to clear Command Prompt screen"},
-  {scenario:"7) Create a folder to collect logs named 'LabLogs'.", answer:["mkdir lablogs","mkdir LabLogs"], memo:"Use mkdir <foldername> to create a directory"},
-  {scenario:"8) Remove a temporary test file named 'temp.txt'.", answer:["del temp.txt","del \"temp.txt\""], memo:"Use del <filename> to delete files"},
-  {scenario:"9) Show current system date.", answer:["date /t","date"], memo:"Use date /t to display the date"},
-  {scenario:"10) Show current system time.", answer:["time /t","time"], memo:"Use time /t to display the current time"},
-  {scenario:"11) List running tasks to identify high-CPU processes.", answer:["tasklist"], memo:"tasklist shows running processes in Windows"},
-  {scenario:"12) Simulate scheduling a shutdown in 60 seconds.", answer:["shutdown /s /t 60"], memo:"Use shutdown /s /t <seconds> to schedule a shutdown"}
-];
-
-/* LINUX */
-const linuxExercises = [
-  {scenario:"1) A server cannot access external sites. Test connectivity to 8.8.8.8.", answer:["ping 8.8.8.8","ping -c 4 8.8.8.8"], memo:"Use ping 8.8.8.8 to test connectivity"},
-  {scenario:"2) List files in the current directory to find config files.", answer:["ls","ls -la"], memo:"ls lists files"},
-  {scenario:"3) Show the current working directory.", answer:"pwd", memo:"pwd prints current directory"},
-  {scenario:"4) Create a directory named 'lab' for practice.", answer:["mkdir lab","mkdir ./lab"], memo:"mkdir <name> creates a directory"},
-  {scenario:"5) Remove a test file named 'old.log'.", answer:["rm old.log","rm ./old.log"], memo:"rm <filename> removes a file"},
-  {scenario:"6) Display the contents of /etc/hosts.", answer:"cat /etc/hosts", memo:"Use cat /etc/hosts to view the hosts file"},
-  {scenario:"7) Create an empty file called todo.txt.", answer:"touch todo.txt", memo:"touch <filename> creates an empty file"},
-  {scenario:"8) Show the current username.", answer:["whoami","id -un"], memo:"whoami prints the current user"},
-  {scenario:"9) Display system information.", answer:"uname -a", memo:"uname -a shows kernel and system info"},
-  {scenario:"10) Show active network interfaces.", answer:["ifconfig","ip addr"], memo:"ifconfig shows network interface info (or ip addr on some systems)"},
-  {scenario:"11) List running processes.", answer:["ps","ps aux"], memo:"ps shows running processes"},
-  {scenario:"12) Simulate shutdown immediately.", answer:["shutdown -h now","sudo shutdown -h now"], memo:"shutdown -h now halts the system (simulated)"}
-];
-
-/* TASK MANAGER */
-const taskExercisesData = [
-  {scenario:"1) An app is not responding. Show the list of processes.", answer:["list","process list"], memo:"Use 'list' to view running processes (simulated)"},
-  {scenario:"2) Check current CPU usage to find spikes.", answer:["cpu"], memo:"Use 'cpu' to show CPU usage"},
-  {scenario:"3) Check memory usage.", answer:["memory"], memo:"Use 'memory' to view memory usage"},
-  {scenario:"4) Kill a misbehaving browser (chrome.exe).", answer:["kill chrome.exe","kill chrome"], memo:"Use 'kill chrome.exe' to terminate the process (simulated)"},
-  {scenario:"5) Show disk usage stats.", answer:["disk"], memo:"Use 'disk' to show disk usage"},
-  {scenario:"6) Show current network activity.", answer:["network"], memo:"Use 'network' to display network usage"},
-  {scenario:"7) List running services.", answer:["services"], memo:"Use 'services' to list services"},
-  {scenario:"8) Show logged-in users.", answer:["users"], memo:"Use 'users' to list logged-in accounts"},
-  {scenario:"9) Show detailed process info.", answer:["details"], memo:"Use 'details' to view process details"},
-  {scenario:"10) Show startup programs.", answer:["startup"], memo:"Use 'startup' to view startup apps"},
-  {scenario:"11) Show performance charts.", answer:["performance"], memo:"Use 'performance' to see performance metrics"},
-  {scenario:"12) Show application history for last 24h.", answer:["history"], memo:"Use 'history' to show app history"}
-];
-
-/* EVENT VIEWER */
-const eventExercisesData = [
-  {scenario:"1) Open Event Viewer to inspect logs.", answer:["open"], memo:"Use 'open' to open Event Viewer (simulated)"},
-  {scenario:"2) View System logs.", answer:["view system","view system logs"], memo:"Use 'view system' to show system logs"},
-  {scenario:"3) View Application logs.", answer:["view application"], memo:"Use 'view application' to show application logs"},
-  {scenario:"4) View Security logs.", answer:["view security"], memo:"Use 'view security' to see security-related events"},
-  {scenario:"5) Find recent error events.", answer:["filter error","filter errors"], memo:"Use 'filter error' to filter for errors"},
-  {scenario:"6) Find recent warnings.", answer:["filter warning","filter warnings"], memo:"Use 'filter warning' to show warnings"},
-  {scenario:"7) Show informational logs.", answer:["filter info","filter information"], memo:"Use 'filter info' to show info logs"},
-  {scenario:"8) Export logs for analysis.", answer:["export logs","export"], memo:"Use 'export logs' to export selected logs"},
-  {scenario:"9) Clear logs (simulated).", answer:["clear logs","clear"], memo:"Use 'clear logs' to clear viewer (simulated)"},
-  {scenario:"10) Search logs for a username.", answer:["find user","search user"], memo:"Use 'find user' to search logs for events by user"},
-  {scenario:"11) Generate reliability report.", answer:["reliability report","generate reliability report"], memo:"Use 'reliability report' to create report"},
-  {scenario:"12) Filter critical events only.", answer:["filter critical"], memo:"Use 'filter critical' to show only critical events"}
-];
-
-/* DEFENDER */
-const defenderExercisesData = [
-  {scenario:"1) Run a quick malware scan.", answer:["scan","quick scan"], memo:"Use 'scan' to run a quick scan"},
-  {scenario:"2) Run a full system scan.", answer:["fullscan","full scan"], memo:"Use 'fullscan' for full system scan"},
-  {scenario:"3) Check for security intelligence updates.", answer:["update","check update"], memo:"Use 'update' to check for updates"},
-  {scenario:"4) Enable real-time protection.", answer:["realtime","enable realtime"], memo:"Use 'realtime' to enable real-time protection"},
-  {scenario:"5) Disable real-time protection (simulated).", answer:["disable"], memo:"Use 'disable' to turn off protection (simulated)"},
-  {scenario:"6) Enable firewall.", answer:["firewall","enable firewall"], memo:"Use 'firewall' to enable firewall"},
-  {scenario:"7) Check firewall status.", answer:["checkfirewall","firewall status"], memo:"Use 'checkfirewall' to view firewall status"},
-  {scenario:"8) View threat history.", answer:["history","view history"], memo:"Use 'history' to view past threats"},
-  {scenario:"9) Remove a detected threat.", answer:["remove","remove threat"], memo:"Use 'remove' to delete a detected threat"},
-  {scenario:"10) Schedule daily scan at 2 AM.", answer:["schedule","schedule scan"], memo:"Use 'schedule' to plan daily scans"},
-  {scenario:"11) Open Defender settings.", answer:["settings","open settings"], memo:"Use 'settings' to open configuration"},
-  {scenario:"12) Generate a security report.", answer:["report","generate report"], memo:"Use 'report' to create a security report"}
-];
-
-/* ========== Build Lab UI & Logic (profile-aware) ========== */
-function initLab(labId){
-  const areaMap = {
-    cmd:{data:cmdExercises, areaId:'cmd-exercises-area', statusId:'cmd-status'},
-    linux:{data:linuxExercises, areaId:'linux-exercises-area', statusId:'linux-status'},
-    task:{data:taskExercisesData, areaId:'task-exercises-area', statusId:'task-status'},
-    event:{data:eventExercisesData, areaId:'event-exercises-area', statusId:'event-status'},
-    defender:{data:defenderExercisesData, areaId:'defender-exercises-area', statusId:'defender-status'}
+  if(!usernameValid(u)){ msgEl.textContent = 'Invalid username — must be ≥8 chars, include uppercase, a digit & special.'; return; }
+  if(!passwordValid(p)){ msgEl.textContent = 'Weak password — must meet policy.'; return; }
+  if(p !== p2){ msgEl.textContent = 'Passwords do not match.'; return; }
+  if(!a1 || !a2 || !a3){ msgEl.textContent = 'Please answer all 3 questions.'; return; }
+  const accs = getAccounts();
+  if(accs[u]){ msgEl.textContent = 'Username exists — choose another.'; return; }
+  const salt = Math.random().toString(36).slice(2,10);
+  accs[u] = {
+    pwHash: hashString(p + salt),
+    salt,
+    questions: [ hashString(a1.toLowerCase()+salt), hashString(a2.toLowerCase()+salt), hashString(a3.toLowerCase()+salt) ],
+    rewards: { coins:0, diamonds:0, keys:0, hints:0, totalLogins:0 },
+    profile: { avatar: null, customization: {} }
   };
-  const entry = areaMap[labId];
-  const area = document.getElementById(entry.areaId);
-  area.innerHTML = '';
-  if(!currentProfile){
-    area.innerHTML = `<div class="meta">Please login and open the Home tab to start this lab.</div>`;
-    document.getElementById(entry.statusId).textContent = 'No profile selected';
-    return;
-  }
-  let state = loadState(labId);
-  if(!state){
-    state = {
-      startTime: null,
-      endTime: null,
-      exercises: entry.data.map(()=>({attempts:0,memoClicked:false,memoClickedBeforeAttempt:false,completedAt:null}))
-    };
-    saveState(labId, state);
-  }
-  entry.data.forEach((ex, idx)=>{
-    const exState = state.exercises[idx];
-    const exDiv = document.createElement('div');
-    exDiv.className = 'exercise';
-    exDiv.id = `${labId}-ex-${idx}`;
-    exDiv.innerHTML = `
-      <div style="display:flex;gap:12px;align-items:flex-start">
-        <div style="flex:1">
-          <div style="font-weight:700;margin-bottom:6px">${sanitize(ex.scenario)}</div>
-          <div id="${labId}-out-${idx}" class="output">${exState.completedAt ? '✅ Completed' : (labId==='cmd' ? 'C:\\> ' : labId==='linux' ? 'student@ekasi:~$ ' : '')}</div>
-          <input id="${labId}-in-${idx}" type="text" placeholder="Type command here" ${exState.completedAt? 'disabled':''}>
-          <div style="margin-top:8px">
-            <button class="btn small" id="${labId}-submit-${idx}">Submit</button>
-            <button class="btn small" id="${labId}-memo-${idx}">Show Memo</button>
-          </div>
-        </div>
-        <div style="min-width:120px;text-align:right">
-          <div style="font-size:13px;color:var(--muted)">Attempts: <span id="${labId}-att-${idx}">${exState.attempts||0}</span></div>
-          <div style="font-size:13px;color:var(--muted);margin-top:6px">Memo used: <span id="${labId}-mc-${idx}">${exState.memoClicked? 'Yes':'No'}</span></div>
-        </div>
-      </div>
-    `;
-    area.appendChild(exDiv);
+  saveAccounts(accs);
+  msgEl.textContent = 'Account created — you can now login.';
+  setTimeout(()=> renderPage('login'), 800);
+}
 
-    // wires
-    const inputEl = document.getElementById(`${labId}-in-${idx}`);
-    const submitBtn = document.getElementById(`${labId}-submit-${idx}`);
-    const memoBtn = document.getElementById(`${labId}-memo-${idx}`);
-    const outEl = document.getElementById(`${labId}-out-${idx}`);
-    const attEl = document.getElementById(`${labId}-att-${idx}`);
-    const mcEl = document.getElementById(`${labId}-mc-${idx}`);
+function doLogin(){
+  const u = (document.getElementById('login-username').value || '').trim();
+  const p = document.getElementById('login-password').value || '';
+  const accs = getAccounts();
+  const acc = accs[u];
+  const msgEl = document.getElementById('login-msg');
+  msgEl.textContent = '';
+  if(!acc){ msgEl.textContent = 'No such user.'; return; }
+  if(hashString(p + acc.salt) !== acc.pwHash){ msgEl.textContent = 'Wrong password.'; return; }
+  // mark logged in
+  localStorage.setItem(LOGGED_IN_KEY, u);
+  // track login & grant immediate "3 logins -> 2 hints" reward
+  trackLoginAndGrant(u);
+  // go to labs page
+  window.location.href = 'labs.html';
+}
 
-    memoBtn.addEventListener('click', ()=>{
-      if(!state.startTime) state.startTime = Date.now();
-      if(!exState.attempts) exState.memoClickedBeforeAttempt = true;
-      exState.memoClicked = true;
-      mcEl.textContent = 'Yes';
-      saveState(labId, state);
-      alert('💡 Memo: ' + ex.memo);
-      updateStatus(labId, state);
-    });
+function doForgot(){
+  const u = (document.getElementById('fp-username').value || '').trim();
+  const fa1 = (document.getElementById('fa1').value || '').trim().toLowerCase();
+  const fa2 = (document.getElementById('fa2').value || '').trim().toLowerCase();
+  const fa3 = (document.getElementById('fa3').value || '').trim().toLowerCase();
+  const newpw = (document.getElementById('fp-newpass').value || '');
+  const accs = getAccounts();
+  const acc = accs[u];
+  const msgEl = document.getElementById('fp-msg');
+  msgEl.textContent = '';
+  if(!acc){ msgEl.textContent = 'No such user.'; return; }
+  let correct = 0;
+  if(hashString(fa1 + acc.salt) === acc.questions[0]) correct++;
+  if(hashString(fa2 + acc.salt) === acc.questions[1]) correct++;
+  if(hashString(fa3 + acc.salt) === acc.questions[2]) correct++;
+  if(correct < 2){ msgEl.textContent = `Only ${correct} correct — need at least 2.`; return; }
+  if(!passwordValid(newpw)){ msgEl.textContent = 'New password fails policy.'; return; }
+  // reset password
+  const newSalt = Math.random().toString(36).slice(2,10);
+  acc.salt = newSalt;
+  acc.pwHash = hashString(newpw + newSalt);
+  saveAccounts(accs);
+  msgEl.textContent = 'Password reset — now login with the new password.';
+  setTimeout(()=> renderPage('login'), 900);
+}
 
-    function markCompleted(){
-      exState.completedAt = Date.now();
-      outEl.textContent = '✅ Completed';
-      inputEl.disabled = true;
-      submitBtn.disabled = true;
-      memoBtn.disabled = true;
-      attEl.textContent = exState.attempts || 0;
-      saveState(labId, state);
-      updateStatus(labId, state);
-      if(state.exercises.every(e=>e.completedAt)){
-        state.endTime = Date.now();
-        saveState(labId, state);
-        setTimeout(()=> showLabComplete(labId, state), 350);
+/* TRACK LOGINS + immediate rewards
+   Structure:
+     loginStats = { 'YYYY-MM-DD': { count: N, users: { username: times } }, ... }
+   When user logs in:
+     - increment today's total
+     - increment per-user totalLogins in account
+     - if today's per-user count reaches 3, give +2 hints immediately
+*/
+function trackLoginAndGrant(username){
+  const raw = localStorage.getItem(LOGIN_TRACK_KEY);
+  let stats = raw ? JSON.parse(raw) : {};
+  const today = new Date().toISOString().slice(0,10);
+  if(!stats[today]) stats[today] = { total:0, users: {} };
+  stats[today].total = (stats[today].total || 0) + 1;
+  stats[today].users[username] = (stats[today].users[username] || 0) + 1;
+  localStorage.setItem(LOGIN_TRACK_KEY, JSON.stringify(stats));
+
+  // update account totals & grant immediate hint rewards
+  const accs = getAccounts();
+  const acc = accs[username];
+  if(acc){
+    acc.rewards.totalLogins = (acc.rewards.totalLogins || 0) + 1;
+    // daily-per-user logins count
+    const perToday = stats[today].users[username];
+    if(perToday >= 3){
+      // grant 2 hints for high-frequency login. Only once per day: ensure we don't double grant.
+      acc._lastHintGrantDay = acc._lastHintGrantDay || '';
+      if(acc._lastHintGrantDay !== today){
+        acc.rewards.hints = (acc.rewards.hints || 0) + 2;
+        acc._lastHintGrantDay = today;
       }
     }
-
-    function submitHandler(){
-      if(!state.startTime) state.startTime = Date.now();
-      const raw = inputEl.value || '';
-      const user = sanitize(raw.trim().toLowerCase());
-      if(!user){ alert('Type a command first'); return; }
-      exState.attempts = (exState.attempts||0) + 1;
-      attEl.textContent = exState.attempts;
-      saveState(labId, state);
-      if(isAnswerMatch(user, ex.answer)){
-        outEl.textContent += `\n> ${user}\n✔ Correct`;
-        markCompleted();
-      } else {
-        outEl.textContent += `\n> ${user}\n✖ Incorrect — try again or Show Memo.`;
-      }
-      inputEl.value = '';
-    }
-
-    submitBtn.addEventListener('click', submitHandler);
-    inputEl.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') submitHandler(); });
-  }); // end each
-
-  updateStatus(labId, state);
+    saveAccounts(accs);
+  }
+  console.log('login tracked', stats);
 }
 
-/* update status area */
-function updateStatus(labId, state){
-  const statusIdMap = {cmd:'cmd-status', linux:'linux-status', task:'task-status', event:'event-status', defender:'defender-status'};
-  const statusEl = document.getElementById(statusIdMap[labId]);
-  if(!statusEl) return;
-  const st = state || loadState(labId);
-  if(!st) { statusEl.textContent = 'Not started'; return; }
-  const completed = st.exercises.filter(e=>e.completedAt).length;
-  const anyMemoBefore = st.exercises.some(e=>e.memoClickedBeforeAttempt);
-  const anyMemo = st.exercises.some(e=>e.memoClicked);
-  const started = !!st.startTime;
-  const elapsed = started ? Math.round(( (st.endTime||Date.now()) - st.startTime)/1000) : 0;
-  statusEl.innerHTML = `Profile: ${currentProfile} &nbsp;|&nbsp; Progress: ${completed}/${st.exercises.length} &nbsp;|&nbsp; Time: ${elapsed}s &nbsp;|&nbsp; Memos used: ${anyMemo? 'Yes':'No'} ${anyMemoBefore? '(some before attempt)':''}`;
-}
+/* Utility to inspect login stats (for admin use) */
+window._getLoginStats = function(){ return JSON.parse(localStorage.getItem(LOGIN_TRACK_KEY) || '{}'); }
 
-/* show lab complete modal */
-function showLabComplete(labId, state){
-  const res = computeScore(state);
-  const html = `
-    <h3>🎉 Lab Complete — ${labId.toUpperCase()}</h3>
-    <p>You completed <strong>${res.completed}/${res.total}</strong> exercises.</p>
-    <p>Time: <strong>${res.totalSeconds}s</strong></p>
-    <p>Score: <span class="score-badge">${res.score}%</span></p>
-    <p style="color:var(--muted)">${res.memoBefore ? 'You used memos before attempting some exercises (penalty applied).' : res.anyMemoUsed ? 'You used memos during the lab.' : 'No memos used — well done!'}</p>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-      <button class="btn small" onclick="closeModal();">Close</button>
-      <button class="btn small" onclick="downloadReport('${labId}');">Download Report</button>
-      <button class="btn small" onclick="resetLab('${labId}'); closeModal();">Reset Lab</button>
-    </div>`;
-  showModal(html);
-  renderScoreboard();
-}
-
-/* Scoreboard render */
-function renderScoreboard(){
-  if(!currentProfile){ document.getElementById('scoreboard-area').innerHTML = '<div class="meta">Set a profile on Home to view scoreboard.</div>'; return; }
-  const labs = ['cmd','linux','task','event','defender'];
-  let html = `<table><thead><tr><th>Lab</th><th>Completed</th><th>Time (s)</th><th>Score</th><th>Actions</th></tr></thead><tbody>`;
-  labs.forEach(l=>{
-    const st = loadState(l);
-    if(!st){ html += `<tr><td>${l.toUpperCase()}</td><td>0/12</td><td>-</td><td>-</td><td><button class="btn small" onclick="initLab('${l}')">Start</button></td></tr>`; }
-    else{
-      const res = computeScore(st);
-      html += `<tr>
-        <td>${l.toUpperCase()}</td>
-        <td>${res.completed}/${res.total}</td>
-        <td>${res.totalSeconds}</td>
-        <td>${res.score}%</td>
-        <td>
-          <button class="btn small" onclick="showLabReport('${l}')">View</button>
-          <button class="btn small" onclick="resetLab('${l}')">Reset</button>
-        </td>
-      </tr>`;
-    }
-  });
-  html += '</tbody></table>';
-  document.getElementById('scoreboard-area').innerHTML = html;
-}
-
-/* quick view modal for lab report */
-function showLabReport(labId){
-  if(!currentProfile){ alert('Set profile first'); return; }
-  const st = loadState(labId);
-  if(!st){ alert('No data'); return; }
-  const res = computeScore(st);
-  let rows = '';
-  st.exercises.forEach((ex,i)=>{ rows += `<tr><td>${i+1}</td><td>${ex.attempts||0}</td><td>${ex.memoClicked? 'Yes':'No'}</td><td>${ex.memoClickedBeforeAttempt? 'Yes':'No'}</td><td>${ex.completedAt? new Date(ex.completedAt).toLocaleString() : '-'}</td></tr>`; });
-  const html = `
-    <h3>Report — ${labId.toUpperCase()}</h3>
-    <p>Profile: ${currentProfile} — Score: <strong>${res.score}%</strong> — Time: ${res.totalSeconds}s</p>
-    <table style="width:100%"><thead><tr><th>#</th><th>Attempts</th><th>MemoUsed</th><th>MemoBefore</th><th>CompletedAt</th></tr></thead><tbody>${rows}</tbody></table>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-      <button class="btn small" onclick="closeModal()">Close</button>
-      <button class="btn small" onclick="downloadReport('${labId}')">Download CSV</button>
-    </div>`;
-  showModal(html);
-}
-
-/* When profile is set, initialize labs & render scoreboard */
-(function watchProfileInput(){
-  // nothing to do; UI driven by loginSuccess
-})();
-
-/* On first load, ensure auth visible */
-document.addEventListener('DOMContentLoaded', ()=>{ show('auth'); });
-
+renderPage('login');
 </script>
 </body>
   </html>
